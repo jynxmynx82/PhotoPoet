@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,6 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
   const [newTone, setNewTone] = useState('Joyful');
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
   const { toast } = useToast();
 
   const handleCopy = () => {
@@ -37,6 +36,7 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
   
   const handleReadAloud = async () => {
     setIsGeneratingAudio(true);
+    setAudioDataUri(null);
     const result = await textToSpeechAction({ text: poem });
     setIsGeneratingAudio(false);
 
@@ -48,9 +48,6 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
       });
     } else if (result.audioDataUri) {
       setAudioDataUri(result.audioDataUri);
-      setTimeout(() => {
-        audioRef.current?.play();
-      }, 0);
     }
   };
 
@@ -97,20 +94,32 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                     <span>Start Over</span>
                   </Button>
                 </div>
-                <Button onClick={handleReadAloud} disabled={isGeneratingAudio} className="w-full">
-                  {isGeneratingAudio ? (
-                    <>
-                      <Loader className="animate-spin" />
-                      <span>Generating Audio...</span>
-                    </>
-                  ) : (
-                    <>
+                {!audioDataUri && (
+                  <Button onClick={handleReadAloud} disabled={isGeneratingAudio} className="w-full">
+                    {isGeneratingAudio ? (
+                      <>
+                        <Loader className="animate-spin" />
+                        <span>Generating Audio...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 />
+                        <span>Read Aloud</span>
+                      </>
+                    )}
+                  </Button>
+                )}
+                {audioDataUri && (
+                  <div className="space-y-2">
+                    <audio controls src={audioDataUri} className="w-full">
+                      Your browser does not support the audio element.
+                    </audio>
+                    <Button onClick={() => setAudioDataUri(null)} variant="outline" className="w-full">
                       <Volume2 />
-                      <span>Read Aloud</span>
-                    </>
-                  )}
-                </Button>
-                {audioDataUri && <audio ref={audioRef} src={audioDataUri} />}
+                      <span>Generate Again</span>
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
