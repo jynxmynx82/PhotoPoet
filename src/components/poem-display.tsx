@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clipboard, Wand2, Trash2, Check } from 'lucide-react';
+import { Clipboard, Wand2, Trash2, Check, Volume2, Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { textToSpeechAction } from '@/app/actions';
 
 interface PoemDisplayProps {
   photoDataUri: string;
@@ -19,6 +20,9 @@ interface PoemDisplayProps {
 export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: PoemDisplayProps) {
   const [isCopied, setIsCopied] = useState(false);
   const [newTone, setNewTone] = useState('Joyful');
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const { toast } = useToast();
 
   const handleCopy = () => {
@@ -31,6 +35,25 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
     setTimeout(() => setIsCopied(false), 2000);
   };
   
+  const handleReadAloud = async () => {
+    setIsGeneratingAudio(true);
+    const result = await textToSpeechAction({ text: poem });
+    setIsGeneratingAudio(false);
+
+    if (result.error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error Generating Audio',
+        description: result.error,
+      });
+    } else if (result.audioDataUri) {
+      setAudioDataUri(result.audioDataUri);
+      setTimeout(() => {
+        audioRef.current?.play();
+      }, 0);
+    }
+  };
+
   const tones = ['Reflective', 'Joyful', 'Melancholic', 'Romantic', 'Humorous', 'Dramatic'];
 
   return (
@@ -74,6 +97,20 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                     <span>Start Over</span>
                   </Button>
                 </div>
+                <Button onClick={handleReadAloud} disabled={isGeneratingAudio} className="w-full">
+                  {isGeneratingAudio ? (
+                    <>
+                      <Loader className="animate-spin" />
+                      <span>Generating Audio...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 />
+                      <span>Read Aloud</span>
+                    </>
+                  )}
+                </Button>
+                {audioDataUri && <audio ref={audioRef} src={audioDataUri} />}
               </div>
             </div>
           </div>

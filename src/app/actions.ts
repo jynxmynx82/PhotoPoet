@@ -2,6 +2,7 @@
 
 import { generatePoem, type GeneratePoemInput } from '@/ai/flows/generate-poem';
 import { customizePoemTone, type CustomizePoemToneInput } from '@/ai/flows/customize-poem-tone';
+import { textToSpeech, type TextToSpeechInput } from '@/ai/flows/text-to-speech';
 
 interface GenerateResult {
   poem?: string;
@@ -11,6 +12,11 @@ interface GenerateResult {
 interface CustomizeResult {
   revisedPoem?: string;
   error?: string;
+}
+
+interface TextToSpeechResult {
+    audioDataUri?: string;
+    error?: string;
 }
 
 export async function generatePoemAction(input: GeneratePoemInput): Promise<GenerateResult> {
@@ -45,5 +51,19 @@ export async function customizePoemAction(input: CustomizePoemToneInput): Promis
     } catch (e) {
         console.error(e);
         return { error: 'An unexpected error occurred while revising the poem. Please try again.' };
+    }
+}
+
+export async function textToSpeechAction(input: TextToSpeechInput): Promise<TextToSpeechResult> {
+    if (!input.text) {
+        return { error: 'Text to speak is missing.' };
+    }
+
+    try {
+        const result = await textToSpeech({ text: input.text });
+        return { audioDataUri: result.audioDataUri };
+    } catch (e) {
+        console.error(e);
+        return { error: 'An unexpected error occurred while generating audio. Please try again.' };
     }
 }
