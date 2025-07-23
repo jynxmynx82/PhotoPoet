@@ -1,0 +1,84 @@
+'use client';
+
+import { useState } from 'react';
+import Image from 'next/image';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Clipboard, Wand2, Trash2, Check } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Label } from './ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+
+interface PoemDisplayProps {
+  photoDataUri: string;
+  poem: string;
+  onRevise: (newTone: string) => void;
+  onReset: () => void;
+}
+
+export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: PoemDisplayProps) {
+  const [isCopied, setIsCopied] = useState(false);
+  const [newTone, setNewTone] = useState('Joyful');
+  const { toast } = useToast();
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(poem);
+    setIsCopied(true);
+    toast({
+      title: 'Copied to clipboard!',
+      description: 'The poem is now ready to be shared.',
+    });
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+  
+  const tones = ['Reflective', 'Joyful', 'Melancholic', 'Romantic', 'Humorous', 'Dramatic'];
+
+  return (
+    <div className="w-full max-w-4xl animate-fade-in">
+      <Card>
+        <CardContent className="p-4 sm:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+            <div className="relative aspect-square w-full rounded-lg overflow-hidden shadow-lg">
+              <Image src={photoDataUri} alt="Uploaded inspiration" layout="fill" objectFit="cover" data-ai-hint="poem photo"/>
+            </div>
+            <div className="flex flex-col">
+              <h2 className="font-headline text-2xl lg:text-3xl text-primary mb-4">Your Poem</h2>
+              <div className="prose prose-lg text-foreground flex-grow mb-4 whitespace-pre-wrap font-body text-base leading-relaxed bg-primary/5 p-4 rounded-md">
+                {poem}
+              </div>
+              <div className="mt-auto space-y-4">
+                <div className="flex items-end gap-2">
+                  <div className="flex-grow space-y-1.5">
+                    <Label htmlFor="revise-tone">Revise Tone</Label>
+                    <Select value={newTone} onValueChange={setNewTone}>
+                      <SelectTrigger id="revise-tone">
+                        <SelectValue placeholder="Select a new tone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tones.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button onClick={() => onRevise(newTone)} variant="outline">
+                    <Wand2 />
+                    <span>Revise</span>
+                  </Button>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button onClick={handleCopy} className="w-full">
+                    {isCopied ? <Check /> : <Clipboard />}
+                    <span>{isCopied ? 'Copied!' : 'Copy Poem'}</span>
+                  </Button>
+                  <Button onClick={onReset} variant="destructive" className="w-full">
+                    <Trash2 />
+                    <span>Start Over</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
