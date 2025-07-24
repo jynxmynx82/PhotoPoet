@@ -3,7 +3,6 @@
 import { generatePoem, type GeneratePoemInput } from '@/ai/flows/generate-poem';
 import { customizePoemTone, type CustomizePoemToneInput } from '@/ai/flows/customize-poem-tone';
 import { textToSpeech, type TextToSpeechInput } from '@/ai/flows/text-to-speech';
-import { generateVideo, type GenerateVideoInput } from '@/ai/flows/generate-video';
 
 interface GenerateResult {
   poem?: string;
@@ -17,11 +16,6 @@ interface CustomizeResult {
 
 interface TextToSpeechResult {
     audioDataUri?: string;
-    error?: string;
-}
-
-interface GenerateVideoResult {
-    videoDataUri?: string;
     error?: string;
 }
 
@@ -71,19 +65,5 @@ export async function textToSpeechAction(input: TextToSpeechInput): Promise<Text
     } catch (e) {
         console.error(e);
         return { error: 'An unexpected error occurred while generating audio. Please try again.' };
-    }
-}
-
-export async function generateVideoAction(input: GenerateVideoInput): Promise<GenerateVideoResult> {
-    if (!input.photoDataUri) {
-        return { error: 'Photo data is missing for video generation.' };
-    }
-
-    try {
-        const result = await generateVideo({ photoDataUri: input.photoDataUri });
-        return { videoDataUri: result.videoDataUri };
-    } catch (e) {
-        console.error(e);
-        return { error: 'An unexpected error occurred while generating the video. This can happen during high demand. Please try again later.' };
     }
 }

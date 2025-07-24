@@ -4,12 +4,11 @@ import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clipboard, Wand2, Trash2, Check, Volume2, Loader, Film, Download } from 'lucide-react';
+import { Clipboard, Wand2, Trash2, Check, Volume2, Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { textToSpeechAction, generateVideoAction } from '@/app/actions';
-import { Skeleton } from './ui/skeleton';
+import { textToSpeechAction } from '@/app/actions';
 
 interface PoemDisplayProps {
   photoDataUri: string;
@@ -24,10 +23,6 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
   
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
-
-  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
-  const [videoDataUri, setVideoDataUri] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
 
   const { toast } = useToast();
 
@@ -58,23 +53,6 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
     }
   };
 
-  const handleAnimatePhoto = async () => {
-    setIsGeneratingVideo(true);
-    setVideoDataUri(null);
-    const result = await generateVideoAction({ photoDataUri });
-    setIsGeneratingVideo(false);
-
-    if (result.error) {
-        toast({
-            variant: 'destructive',
-            title: 'Error Generating Video',
-            description: result.error,
-        });
-    } else if (result.videoDataUri) {
-        setVideoDataUri(result.videoDataUri);
-    }
-  };
-
   const tones = ['Reflective', 'Joyful', 'Melancholic', 'Romantic', 'Humorous', 'Dramatic'];
 
   return (
@@ -86,25 +64,6 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                 <div className="relative aspect-video w-full rounded-lg overflow-hidden shadow-lg">
                     <Image src={photoDataUri} alt="Uploaded inspiration" layout="fill" objectFit="cover" data-ai-hint="poem photo"/>
                 </div>
-                {isGeneratingVideo && (
-                    <div className="space-y-2 text-center">
-                        <Skeleton className="w-full aspect-video rounded-lg" />
-                        <p className="text-sm text-muted-foreground animate-pulse">Generating your video... This may take up to a minute.</p>
-                    </div>
-                )}
-                {videoDataUri && (
-                    <div className="space-y-2">
-                        <video ref={videoRef} controls src={videoDataUri} className="w-full rounded-lg" loop autoPlay playsInline>
-                            Your browser does not support the video tag.
-                        </video>
-                         <a href={videoDataUri} download="poem-video.mp4">
-                            <Button variant="outline" className="w-full">
-                                <Download />
-                                <span>Download Video</span>
-                            </Button>
-                        </a>
-                    </div>
-                )}
             </div>
 
             <div className="flex flex-col">
@@ -129,15 +88,6 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                     <Wand2 />
                     <span>Revise</span>
                   </Button>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-2">
-                    {!isGeneratingVideo && !videoDataUri && (
-                        <Button onClick={handleAnimatePhoto} className="w-full">
-                            <Film />
-                            <span>Animate Photo</span>
-                        </Button>
-                    )}
                 </div>
 
                 {!audioDataUri && (
