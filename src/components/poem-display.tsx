@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,12 @@ import { Clipboard, Wand2, Trash2, Check, Volume2, Loader, Image as ImageIcon, D
 import { useToast } from '@/hooks/use-toast';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { textToSpeechAction, generateImageAction } from '@/app/actions';
+import { textToSpeechAction } from '@/app/actions';
+import { generateImageAction } from '@/app/actions';
 import { Skeleton } from './ui/skeleton';
+
+type Voice = 'Algenib' | 'Sirius' | 'Andromeda' | 'Perseus' | 'Lyra';
+const voices: Voice[] = ['Algenib', 'Sirius', 'Andromeda', 'Perseus', 'Lyra'];
 
 interface PoemDisplayProps {
   photoDataUri: string;
@@ -24,6 +28,7 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
   
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
+  const [selectedVoice, setSelectedVoice] = useState<Voice>('Algenib');
 
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [generatedImageDataUri, setGeneratedImageDataUri] = useState<string | null>(null);
@@ -41,10 +46,10 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
     setTimeout(() => setIsCopied(false), 2000);
   };
   
-  const handleReadAloud = async () => {
+  const handleGenerateAudio = async (voice: Voice) => {
     setIsGeneratingAudio(true);
     setAudioDataUri(null);
-    const result = await textToSpeechAction({ text: poem });
+    const result = await textToSpeechAction({ text: poem, voice: voice });
     setIsGeneratingAudio(false);
 
     if (result.error) {
@@ -57,6 +62,13 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
       setAudioDataUri(result.audioDataUri);
     }
   };
+  
+  useEffect(() => {
+    if (audioDataUri || isGeneratingAudio) {
+      handleGenerateAudio(selectedVoice);
+    }
+  }, [selectedVoice]);
+
 
   const handleGenerateImage = async () => {
     setIsGeneratingImage(true);
@@ -80,7 +92,6 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
     if (!generatedImageDataUri) return;
     const link = document.createElement('a');
     link.href = generatedImageDataUri;
-    // Naming the download based on the poem's first few words
     const safeName = poem.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_') || 'poem_art';
     link.download = `${safeName}.png`;
     document.body.appendChild(link);
@@ -162,35 +173,43 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                   </Button>
                 </div>
 
-                {!audioDataUri && (
-                  <Button onClick={handleReadAloud} disabled={isGeneratingAudio} className="w-full">
-                    {isGeneratingAudio ? (
-                      <>
-                        <Loader className="animate-spin" />
-                        <span>Generating Audio...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Volume2 />
-                        <span>Read Aloud</span>
-                      </>
-                    )}
+                {isGeneratingAudio && !audioDataUri && (
+                    <Button disabled className="w-full">
+                      <Loader className="animate-spin" />
+                      <span>Generating Audio...</span>
+                    </Button>
+                )}
+
+                {!isGeneratingAudio && !audioDataUri && (
+                  <Button onClick={() => handleGenerateAudio(selectedVoice)} className="w-full">
+                    <Volume2 />
+                    <span>Read Aloud</span>
                   </Button>
                 )}
+
                 {audioDataUri && (
                   <div className="space-y-2">
-                    <audio controls src={audioDataUri} className="w-full">
+                    <audio controls src={audioDataUri} className="w-full" autoPlay>
                       Your browser does not support the audio element.
                     </audio>
-                    <div className="flex gap-2">
-                      <Button onClick={handleDownloadAudio} variant="outline" className="w-full">
-                        <Download />
-                        <span>Download Audio</span>
-                      </Button>
-                      <Button onClick={() => setAudioDataUri(null)} variant="outline" className="w-full">
-                        <Volume2 />
-                        <span>Generate Again</span>
-                      </Button>
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="voice-select">Voice</Label>
+                             <Select value={selectedVoice} onValueChange={(value) => setSelectedVoice(value as Voice)}>
+                              <SelectTrigger id="voice-select">
+                                 <SelectValue placeholder="Select a voice" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                 {voices.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                              </SelectContent>
+                             </Select>
+                        </div>
+                        <div className="flex flex-col justify-end">
+                            <Button onClick={handleDownloadAudio} variant="outline">
+                                <Download />
+                                <span>Download</span>
+                            </Button>
+                        </div>
                     </div>
                   </div>
                 )}
