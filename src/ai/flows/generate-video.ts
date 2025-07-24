@@ -72,7 +72,7 @@ const generateVideoFlow = ai.defineFlow(
     }
 
     const videoPart = operation.result?.media;
-    if (!videoPart) {
+    if (!videoPart?.url) {
       throw new Error('Failed to find the generated video in the response.');
     }
 
