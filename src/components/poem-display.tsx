@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Clipboard, Wand2, Trash2, Check, Volume2, Loader, ImageIcon, Download }
 import { useToast } from '@/hooks/use-toast';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { textToSpeechAction } from '@/app/actions';
+import { textToSpeechAction, generateImageAction } from '@/app/actions';
 import { Skeleton } from './ui/skeleton';
 
 type Voice = 'Algenib' | 'Sirius' | 'Andromeda' | 'Perseus' | 'Lyra';
@@ -31,8 +31,21 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
 
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [generatedImageDataUri, setGeneratedImageDataUri] = useState<string | null>(null);
-
+  
+  const isInitialMount = useRef(true);
   const { toast } = useToast();
+  
+  useEffect(() => {
+    // This effect should only run when the user explicitly changes the voice,
+    // not on the initial render when `selectedVoice` is first set.
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+    } else {
+        handleGenerateAudio(selectedVoice);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedVoice]);
+
 
   const handleCopy = () => {
     navigator.clipboard.writeText(poem);
@@ -46,7 +59,7 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
   
   const handleGenerateAudio = async (voice: Voice) => {
     setIsGeneratingAudio(true);
-    setAudioDataUri(null); // Clear previous audio
+    setAudioDataUri(null);
     const result = await textToSpeechAction({ text: poem, voice: voice });
     setIsGeneratingAudio(false);
 
@@ -58,7 +71,6 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
       });
     } else if (result.audioDataUri) {
       setAudioDataUri(result.audioDataUri);
-      setSelectedVoice(voice);
     }
   };
 
@@ -83,6 +95,18 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
     link.click();
     document.body.removeChild(link);
   };
+  
+  const handleGenerateImage = async () => {
+    setIsGeneratingImage(true);
+    const result = await generateImageAction({ poem });
+    setIsGeneratingImage(false);
+
+    if (result.error) {
+        toast({ variant: 'destructive', title: 'Error Generating Image', description: result.error });
+    } else if (result.imageDataUri) {
+        setGeneratedImageDataUri(result.imageDataUri);
+    }
+  };
 
   const tones = ['Reflective', 'Joyful', 'Melancholic', 'Romantic', 'Humorous', 'Dramatic'];
 
@@ -106,16 +130,7 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                         <span>Download Image</span>
                     </Button>
                 ) : (
-                    <Button onClick={async () => {
-                      setIsGeneratingImage(true);
-                      const result = await textToSpeechAction({ text: poem }); // NOTE: This seems to be a bug from a previous step, should be generateImageAction
-                      setIsGeneratingImage(false);
-                      if (result.error) {
-                          toast({ variant: 'destructive', title: 'Error Generating Image', description: result.error });
-                      } else if (result.audioDataUri) { // This should be imageDataUri
-                          setGeneratedImageDataUri(result.audioDataUri);
-                      }
-                    }} disabled={isGeneratingImage} className="w-full">
+                    <Button onClick={handleGenerateImage} disabled={isGeneratingImage} className="w-full">
                         {isGeneratingImage ? (
                             <>
                                 <Loader className="animate-spin" />
@@ -129,7 +144,6 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                         )}
                     </Button>
                 )}
-
             </div>
 
             <div className="flex flex-col">
@@ -178,10 +192,10 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                     <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1.5">
                             <Label htmlFor="voice-select">Voice</Label>
-                             <Select value={selectedVoice} onValueChange={(value) => handleGenerateAudio(value as Voice)}>
+                             <Select value={selectedVoice} onValueChange={(value) => setSelectedVoice(value as Voice)}>
                               <SelectTrigger id="voice-select">
                                  <SelectValue placeholder="Select a voice" />
-                              </SelectTrigger>
+                              </Trigger>
                               <SelectContent>
                                  {voices.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
                               </SelectContent>
