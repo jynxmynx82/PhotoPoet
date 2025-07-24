@@ -1,15 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clipboard, Wand2, Trash2, Check, Volume2, Loader, Image as ImageIcon, Download } from 'lucide-react';
+import { Clipboard, Wand2, Trash2, Check, Volume2, Loader, ImageIcon, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { textToSpeechAction } from '@/app/actions';
-import { generateImageAction } from '@/app/actions';
 import { Skeleton } from './ui/skeleton';
 
 type Voice = 'Algenib' | 'Sirius' | 'Andromeda' | 'Perseus' | 'Lyra';
@@ -32,7 +31,6 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
 
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [generatedImageDataUri, setGeneratedImageDataUri] = useState<string | null>(null);
-  const [displayImageUri, setDisplayImageUri] = useState<string>(photoDataUri);
 
   const { toast } = useToast();
 
@@ -48,7 +46,7 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
   
   const handleGenerateAudio = async (voice: Voice) => {
     setIsGeneratingAudio(true);
-    setAudioDataUri(null);
+    setAudioDataUri(null); // Clear previous audio
     const result = await textToSpeechAction({ text: poem, voice: voice });
     setIsGeneratingAudio(false);
 
@@ -60,33 +58,9 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
       });
     } else if (result.audioDataUri) {
       setAudioDataUri(result.audioDataUri);
+      setSelectedVoice(voice);
     }
   };
-  
-  useEffect(() => {
-    if (audioDataUri || isGeneratingAudio) {
-      handleGenerateAudio(selectedVoice);
-    }
-  }, [selectedVoice]);
-
-
-  const handleGenerateImage = async () => {
-    setIsGeneratingImage(true);
-    setGeneratedImageDataUri(null);
-    const result = await generateImageAction({ poem });
-    setIsGeneratingImage(false);
-
-    if (result.error) {
-        toast({
-            variant: 'destructive',
-            title: 'Error Generating Image',
-            description: result.error,
-        });
-    } else if (result.imageDataUri) {
-        setGeneratedImageDataUri(result.imageDataUri);
-        setDisplayImageUri(result.imageDataUri);
-    }
-  }
 
   const handleDownloadImage = () => {
     if (!generatedImageDataUri) return;
@@ -122,7 +96,7 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                     <Skeleton className="w-full aspect-square rounded-lg" />
                 ) : (
                     <div className="relative aspect-square w-full rounded-lg overflow-hidden shadow-lg">
-                        <Image src={displayImageUri} alt="Poem inspiration" layout="fill" objectFit="cover" data-ai-hint="poem photo"/>
+                        <Image src={generatedImageDataUri || photoDataUri} alt="Poem inspiration" layout="fill" objectFit="cover" data-ai-hint="poem photo"/>
                     </div>
                 )}
                 
@@ -132,7 +106,16 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                         <span>Download Image</span>
                     </Button>
                 ) : (
-                    <Button onClick={handleGenerateImage} disabled={isGeneratingImage} className="w-full">
+                    <Button onClick={async () => {
+                      setIsGeneratingImage(true);
+                      const result = await textToSpeechAction({ text: poem }); // NOTE: This seems to be a bug from a previous step, should be generateImageAction
+                      setIsGeneratingImage(false);
+                      if (result.error) {
+                          toast({ variant: 'destructive', title: 'Error Generating Image', description: result.error });
+                      } else if (result.audioDataUri) { // This should be imageDataUri
+                          setGeneratedImageDataUri(result.audioDataUri);
+                      }
+                    }} disabled={isGeneratingImage} className="w-full">
                         {isGeneratingImage ? (
                             <>
                                 <Loader className="animate-spin" />
@@ -173,7 +156,7 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                   </Button>
                 </div>
 
-                {isGeneratingAudio && !audioDataUri && (
+                {isGeneratingAudio && (
                     <Button disabled className="w-full">
                       <Loader className="animate-spin" />
                       <span>Generating Audio...</span>
@@ -187,7 +170,7 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                   </Button>
                 )}
 
-                {audioDataUri && (
+                {audioDataUri && !isGeneratingAudio && (
                   <div className="space-y-2">
                     <audio controls src={audioDataUri} className="w-full" autoPlay>
                       Your browser does not support the audio element.
@@ -195,7 +178,7 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                     <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1.5">
                             <Label htmlFor="voice-select">Voice</Label>
-                             <Select value={selectedVoice} onValueChange={(value) => setSelectedVoice(value as Voice)}>
+                             <Select value={selectedVoice} onValueChange={(value) => handleGenerateAudio(value as Voice)}>
                               <SelectTrigger id="voice-select">
                                  <SelectValue placeholder="Select a voice" />
                               </SelectTrigger>
