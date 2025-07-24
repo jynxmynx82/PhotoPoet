@@ -11,7 +11,6 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
-import {MediaPart} from 'genkit/media';
 
 const GenerateVideoInputSchema = z.object({
   photoDataUri: z
@@ -72,8 +71,8 @@ const generateVideoFlow = ai.defineFlow(
       throw new Error('Failed to generate video: ' + operation.error.message);
     }
 
-    const videoPart = operation.output?.message?.content.find(p => !!p.media);
-    if (!videoPart || !videoPart.media) {
+    const videoPart = operation.result?.media;
+    if (!videoPart) {
       throw new Error('Failed to find the generated video in the response.');
     }
 
@@ -81,7 +80,7 @@ const generateVideoFlow = ai.defineFlow(
     // It also requires an API key for access.
     const fetch = (await import('node-fetch')).default;
     const videoDownloadResponse = await fetch(
-      `${videoPart.media.url}&key=${process.env.GEMINI_API_KEY}`
+      `${videoPart.url}&key=${process.env.GEMINI_API_KEY}`
     );
 
     if (
