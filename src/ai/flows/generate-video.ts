@@ -92,8 +92,8 @@ const generateVideoFlow = ai.defineFlow(
       );
     }
 
-    const videoBuffer = await videoDownloadResponse.buffer();
-    const videoBase64 = videoBuffer.toString('base64');
+    const videoBuffer = await videoDownloadResponse.arrayBuffer();
+    const videoBase64 = Buffer.from(videoBuffer).toString('base64');
     
     return {
       videoDataUri: `data:video/mp4;base64,${videoBase64}`,
