@@ -70,9 +70,9 @@ const generateVideoFlow = ai.defineFlow(
     if (operation.error) {
       throw new Error('Failed to generate video: ' + operation.error.message);
     }
-
-    const videoPart = operation.result?.media;
-    if (!videoPart?.url) {
+    
+    const videoPart = operation.output?.message?.content.find(p => !!p.media);
+    if (!videoPart?.media?.url) {
       throw new Error('Failed to find the generated video in the response.');
     }
 
@@ -80,7 +80,7 @@ const generateVideoFlow = ai.defineFlow(
     // It also requires an API key for access.
     const fetch = (await import('node-fetch')).default;
     const videoDownloadResponse = await fetch(
-      `${videoPart.url}&key=${process.env.GEMINI_API_KEY}`
+      `${videoPart.media.url}&key=${process.env.GEMINI_API_KEY}`
     );
 
     if (
