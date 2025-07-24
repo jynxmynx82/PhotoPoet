@@ -108,9 +108,9 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             <div className="space-y-4">
                 {isGeneratingImage ? (
-                    <Skeleton className="w-full aspect-video rounded-lg" />
+                    <Skeleton className="w-full aspect-square rounded-lg" />
                 ) : (
-                    <div className="relative aspect-video w-full rounded-lg overflow-hidden shadow-lg">
+                    <div className="relative aspect-square w-full rounded-lg overflow-hidden shadow-lg">
                         <Image src={displayImageUri} alt="Poem inspiration" layout="fill" objectFit="cover" data-ai-hint="poem photo"/>
                     </div>
                 )}
