@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clipboard, Wand2, Trash2, Check, Volume2, Loader } from 'lucide-react';
+import { Clipboard, Wand2, Trash2, Check, Volume2, Loader, Image as ImageIcon, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { textToSpeechAction } from '@/app/actions';
+import { textToSpeechAction, generateImageAction } from '@/app/actions';
+import { Skeleton } from './ui/skeleton';
 
 interface PoemDisplayProps {
   photoDataUri: string;
@@ -23,6 +24,10 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
   
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
+
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [generatedImageDataUri, setGeneratedImageDataUri] = useState<string | null>(null);
+  const [displayImageUri, setDisplayImageUri] = useState<string>(photoDataUri);
 
   const { toast } = useToast();
 
@@ -53,6 +58,36 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
     }
   };
 
+  const handleGenerateImage = async () => {
+    setIsGeneratingImage(true);
+    setGeneratedImageDataUri(null);
+    const result = await generateImageAction({ poem });
+    setIsGeneratingImage(false);
+
+    if (result.error) {
+        toast({
+            variant: 'destructive',
+            title: 'Error Generating Image',
+            description: result.error,
+        });
+    } else if (result.imageDataUri) {
+        setGeneratedImageDataUri(result.imageDataUri);
+        setDisplayImageUri(result.imageDataUri);
+    }
+  }
+
+  const handleDownloadImage = () => {
+    if (!generatedImageDataUri) return;
+    const link = document.createElement('a');
+    link.href = generatedImageDataUri;
+    // Naming the download based on the poem's first few words
+    const safeName = poem.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_') || 'poem_art';
+    link.download = `${safeName}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   const tones = ['Reflective', 'Joyful', 'Melancholic', 'Romantic', 'Humorous', 'Dramatic'];
 
   return (
@@ -61,9 +96,35 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
         <CardContent className="p-4 sm:p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             <div className="space-y-4">
-                <div className="relative aspect-video w-full rounded-lg overflow-hidden shadow-lg">
-                    <Image src={photoDataUri} alt="Uploaded inspiration" layout="fill" objectFit="cover" data-ai-hint="poem photo"/>
-                </div>
+                {isGeneratingImage ? (
+                    <Skeleton className="w-full aspect-video rounded-lg" />
+                ) : (
+                    <div className="relative aspect-video w-full rounded-lg overflow-hidden shadow-lg">
+                        <Image src={displayImageUri} alt="Poem inspiration" layout="fill" objectFit="cover" data-ai-hint="poem photo"/>
+                    </div>
+                )}
+                
+                {generatedImageDataUri ? (
+                    <Button onClick={handleDownloadImage} className="w-full">
+                        <Download />
+                        <span>Download Image</span>
+                    </Button>
+                ) : (
+                    <Button onClick={handleGenerateImage} disabled={isGeneratingImage} className="w-full">
+                        {isGeneratingImage ? (
+                            <>
+                                <Loader className="animate-spin" />
+                                <span>Creating Artwork...</span>
+                            </>
+                        ) : (
+                            <>
+                                <ImageIcon />
+                                <span>Generate Artistic Image</span>
+                            </>
+                        )}
+                    </Button>
+                )}
+
             </div>
 
             <div className="flex flex-col">

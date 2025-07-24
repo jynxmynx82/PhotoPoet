@@ -3,6 +3,7 @@
 import { generatePoem, type GeneratePoemInput } from '@/ai/flows/generate-poem';
 import { customizePoemTone, type CustomizePoemToneInput } from '@/ai/flows/customize-poem-tone';
 import { textToSpeech, type TextToSpeechInput } from '@/ai/flows/text-to-speech';
+import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
 
 interface GenerateResult {
   poem?: string;
@@ -16,6 +17,11 @@ interface CustomizeResult {
 
 interface TextToSpeechResult {
     audioDataUri?: string;
+    error?: string;
+}
+
+interface GenerateImageResult {
+    imageDataUri?: string;
     error?: string;
 }
 
@@ -65,5 +71,19 @@ export async function textToSpeechAction(input: TextToSpeechInput): Promise<Text
     } catch (e) {
         console.error(e);
         return { error: 'An unexpected error occurred while generating audio. Please try again.' };
+    }
+}
+
+export async function generateImageAction(input: GenerateImageInput): Promise<GenerateImageResult> {
+    if (!input.poem) {
+        return { error: 'Poem is missing.' };
+    }
+
+    try {
+        const result = await generateImage({ poem: input.poem });
+        return { imageDataUri: result.imageDataUri };
+    } catch (e) {
+        console.error(e);
+        return { error: 'An unexpected error occurred while generating the image. Please try again.' };
     }
 }
