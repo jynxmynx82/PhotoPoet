@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { textToSpeechAction, generateImageAction } from '@/app/actions';
 import { Skeleton } from './ui/skeleton';
 
+// Moved from backend to fix "use server" export error
 type Voice = 'Algenib' | 'Sirius' | 'Andromeda' | 'Perseus' | 'Lyra';
 const voices: Voice[] = ['Algenib', 'Sirius', 'Andromeda', 'Perseus', 'Lyra'];
 
@@ -35,28 +36,6 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
   const isInitialMount = useRef(true);
   const { toast } = useToast();
   
-  useEffect(() => {
-    // This effect should only run when the user explicitly changes the voice,
-    // not on the initial render when `selectedVoice` is first set.
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-    } else {
-        handleGenerateAudio(selectedVoice);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedVoice]);
-
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(poem);
-    setIsCopied(true);
-    toast({
-      title: 'Copied to clipboard!',
-      description: 'The poem is now ready to be shared.',
-    });
-    setTimeout(() => setIsCopied(false), 2000);
-  };
-  
   const handleGenerateAudio = async (voice: Voice) => {
     setIsGeneratingAudio(true);
     setAudioDataUri(null);
@@ -74,6 +53,26 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
     }
   };
 
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+    } else if (!isGeneratingAudio) {
+      handleGenerateAudio(selectedVoice);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedVoice]);
+
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(poem);
+    setIsCopied(true);
+    toast({
+      title: 'Copied to clipboard!',
+      description: 'The poem is now ready to be shared.',
+    });
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+  
   const handleDownloadImage = () => {
     if (!generatedImageDataUri) return;
     const link = document.createElement('a');
@@ -170,39 +169,41 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                   </Button>
                 </div>
 
-                {isGeneratingAudio && (
-                    <Button disabled className="w-full">
-                      <Loader className="animate-spin" />
-                      <span>Generating Audio...</span>
-                    </Button>
-                )}
-
-                {!isGeneratingAudio && !audioDataUri && (
-                  <Button onClick={() => handleGenerateAudio(selectedVoice)} className="w-full">
-                    <Volume2 />
-                    <span>Read Aloud</span>
+                {!audioDataUri && (
+                  <Button onClick={() => handleGenerateAudio(selectedVoice)} disabled={isGeneratingAudio} className="w-full">
+                    {isGeneratingAudio ? (
+                      <>
+                        <Loader className="animate-spin" />
+                        <span>Generating Audio...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 />
+                        <span>Read Aloud</span>
+                      </>
+                    )}
                   </Button>
                 )}
 
-                {audioDataUri && !isGeneratingAudio && (
+                {audioDataUri && (
                   <div className="space-y-2">
-                    <audio controls src={audioDataUri} className="w-full" autoPlay>
+                    <audio controls src={audioDataUri} className="w-full" autoPlay={!isInitialMount.current}>
                       Your browser does not support the audio element.
                     </audio>
                     <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1.5">
                             <Label htmlFor="voice-select">Voice</Label>
-                             <Select value={selectedVoice} onValueChange={(value) => setSelectedVoice(value as Voice)}>
+                             <Select value={selectedVoice} onValueChange={(value) => setSelectedVoice(value as Voice)} disabled={isGeneratingAudio}>
                               <SelectTrigger id="voice-select">
                                  <SelectValue placeholder="Select a voice" />
-                              </Trigger>
+                              </SelectTrigger>
                               <SelectContent>
                                  {voices.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
                               </SelectContent>
                              </Select>
                         </div>
                         <div className="flex flex-col justify-end">
-                            <Button onClick={handleDownloadAudio} variant="outline">
+                            <Button onClick={handleDownloadAudio} variant="outline" disabled={isGeneratingAudio}>
                                 <Download />
                                 <span>Download</span>
                             </Button>
