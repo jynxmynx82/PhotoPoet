@@ -111,11 +111,11 @@ export default function Home() {
         handleReset();
         return <PhotoUploader onPhotoUpload={handlePhotoUpload} />;
       case 'error':
-        return (
-          <div className="text-center">
-            <PhotoUploader onPhotoUpload={handlePhotoUpload} />
-          </div>
-        );
+        // When an error occurs, we still want to show the uploader, 
+        // but we might show the error message above it or within it.
+        // For now, just resetting to initial state which shows the uploader.
+        // The toast notification handles showing the error message.
+        return <PhotoUploader onPhotoUpload={handlePhotoUpload} />;
       default:
         return null;
     }
