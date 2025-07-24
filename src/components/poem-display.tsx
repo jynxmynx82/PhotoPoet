@@ -88,6 +88,17 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
     document.body.removeChild(link);
   }
 
+  const handleDownloadAudio = () => {
+    if (!audioDataUri) return;
+    const link = document.createElement('a');
+    link.href = audioDataUri;
+    const safeName = poem.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_') || 'poem_audio';
+    link.download = `${safeName}.wav`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const tones = ['Reflective', 'Joyful', 'Melancholic', 'Romantic', 'Humorous', 'Dramatic'];
 
   return (
@@ -171,10 +182,16 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                     <audio controls src={audioDataUri} className="w-full">
                       Your browser does not support the audio element.
                     </audio>
-                    <Button onClick={() => setAudioDataUri(null)} variant="outline" className="w-full">
-                      <Volume2 />
-                      <span>Generate Again</span>
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button onClick={handleDownloadAudio} variant="outline" className="w-full">
+                        <Download />
+                        <span>Download Audio</span>
+                      </Button>
+                      <Button onClick={() => setAudioDataUri(null)} variant="outline" className="w-full">
+                        <Volume2 />
+                        <span>Generate Again</span>
+                      </Button>
+                    </div>
                   </div>
                 )}
                  <div className="flex flex-col sm:flex-row gap-2">
