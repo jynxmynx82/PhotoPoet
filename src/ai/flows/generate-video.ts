@@ -51,7 +51,7 @@ const generateVideoFlow = ai.defineFlow(
       ],
       config: {
         durationSeconds: 5,
-        aspectRatio: '9:16', // Square-ish, good for social media
+        aspectRatio: '16:9',
         personGeneration: 'allow_adult',
       },
     });
