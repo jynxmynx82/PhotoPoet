@@ -72,7 +72,7 @@ export async function textToSpeechAction(input: TextToSpeechInput): Promise<Text
     }
 
     try {
-        const result = await textToSpeech({ text: input.text });
+        const result = await textToSpeech(input);
         return { audioDataUri: result.audioDataUri };
     } catch (e) {
         console.error(e);

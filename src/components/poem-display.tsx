@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,8 @@ import { Clipboard, Wand2, Trash2, Check, Volume2, Loader, ImageIcon, Download }
 import { useToast } from '@/hooks/use-toast';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { textToSpeechAction, generateImageAction } from '@/app/actions';
+import { textToSpeechAction } from '@/app/actions';
+import { generateImageAction } from '@/app/actions';
 import { Skeleton } from './ui/skeleton';
 
 interface PoemDisplayProps {
@@ -18,22 +19,33 @@ interface PoemDisplayProps {
   onReset: () => void;
 }
 
+const tones = ['Reflective', 'Joyful', 'Melancholic', 'Romantic', 'Humorous', 'Dramatic'];
+const supportedVoices = [
+  'achernar', 'achird', 'algenib', 'algieba', 'alnilam', 'aoede', 'autonoe', 
+  'callirrhoe', 'charon', 'despina', 'enceladus', 'erinome', 'fenrir', 'gacrux', 
+  'iapetus', 'kore', 'laomedeia', 'leda', 'orus', 'puck', 'pulcherrima', 'rasalgethi', 
+  'sadachbia', 'sadaltager', 'schedar', 'sulafat', 'umbriel', 'vindemiatrix', 
+  'zephyr', 'zubenelgenubi'
+];
+
 export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: PoemDisplayProps) {
   const [isCopied, setIsCopied] = useState(false);
   const [newTone, setNewTone] = useState('Joyful');
   
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
+  const [selectedVoice, setSelectedVoice] = useState('algenib');
 
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [generatedImageDataUri, setGeneratedImageDataUri] = useState<string | null>(null);
   
   const { toast } = useToast();
-  
-  const handleGenerateAudio = async () => {
+  const isInitialMount = useRef(true);
+
+  const handleGenerateAudio = async (voice: string) => {
     setIsGeneratingAudio(true);
-    setAudioDataUri(null);
-    const result = await textToSpeechAction({ text: poem });
+    setAudioDataUri(null); // Clear previous audio
+    const result = await textToSpeechAction({ text: poem, voiceName: voice });
     setIsGeneratingAudio(false);
 
     if (result.error) {
@@ -46,6 +58,16 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
       setAudioDataUri(result.audioDataUri);
     }
   };
+
+  useEffect(() => {
+    // This effect runs when the user selects a new voice.
+    // We use isInitialMount to prevent it from running on the first render.
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+    } else {
+      handleGenerateAudio(selectedVoice);
+    }
+  }, [selectedVoice]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(poem);
@@ -90,8 +112,6 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
         setGeneratedImageDataUri(result.imageDataUri);
     }
   };
-
-  const tones = ['Reflective', 'Joyful', 'Melancholic', 'Romantic', 'Humorous', 'Dramatic'];
 
   return (
     <div className="w-full max-w-4xl animate-fade-in">
@@ -153,33 +173,45 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                   </Button>
                 </div>
 
-                {!audioDataUri && (
-                  <Button onClick={handleGenerateAudio} disabled={isGeneratingAudio} className="w-full">
+                <div className="space-y-2">
+                  <Button onClick={() => handleGenerateAudio(selectedVoice)} disabled={isGeneratingAudio} className="w-full">
                     {isGeneratingAudio ? (
-                      <>
-                        <Loader className="animate-spin" />
-                        <span>Generating Audio...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Volume2 />
-                        <span>Read Aloud</span>
-                      </>
-                    )}
+                        <>
+                          <Loader className="animate-spin" />
+                          <span>Generating Audio...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 />
+                          <span>Read Aloud</span>
+                        </>
+                      )}
                   </Button>
-                )}
 
-                {audioDataUri && (
-                  <div className="space-y-2">
-                    <audio controls src={audioDataUri} className="w-full" autoPlay>
-                      Your browser does not support the audio element.
-                    </audio>
-                    <Button onClick={handleDownloadAudio} variant="outline" className="w-full">
-                        <Download />
-                        <span>Download Audio</span>
-                    </Button>
-                  </div>
-                )}
+                  {audioDataUri && (
+                    <div className="space-y-2">
+                       <div className="space-y-1.5">
+                          <Label htmlFor="voice-select">Change Voice</Label>
+                          <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+                              <SelectTrigger id="voice-select">
+                                  <SelectValue placeholder="Select a voice" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  {supportedVoices.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                       </div>
+                      <audio controls src={audioDataUri} className="w-full" autoPlay>
+                        Your browser does not support the audio element.
+                      </audio>
+                      <Button onClick={handleDownloadAudio} variant="outline" className="w-full">
+                          <Download />
+                          <span>Download Audio</span>
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
                  <div className="flex flex-col sm:flex-row gap-2">
                   <Button onClick={handleCopy} className="w-full">
                     {isCopied ? <Check /> : <Clipboard />}
