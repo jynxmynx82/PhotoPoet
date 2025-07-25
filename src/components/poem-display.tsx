@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -137,8 +138,8 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                 {isGeneratingImage ? (
                     <Skeleton className="w-full aspect-square rounded-lg" />
                 ) : (
-                    <div className="relative aspect-square w-full rounded-lg overflow-hidden shadow-lg">
-                        <Image src={generatedImageDataUri || photoDataUri} alt="Poem inspiration" layout="fill" objectFit="cover" data-ai-hint="poem photo"/>
+                    <div className="relative aspect-square w-full rounded-lg overflow-hidden shadow-lg bg-black/5">
+                        <Image src={generatedImageDataUri || photoDataUri} alt="Poem inspiration" layout="fill" objectFit="contain" data-ai-hint="poem photo"/>
                     </div>
                 )}
                 
@@ -245,3 +246,4 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
     </div>
   );
 }
+
