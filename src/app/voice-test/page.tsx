@@ -3,19 +3,27 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { testVoiceAction } from '@/app/actions';
 import { Loader } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
+const supportedVoices = [
+  'achernar', 'achird', 'algenib', 'algieba', 'alnilam', 'aoede', 'autonoe', 
+  'callirrhoe', 'charon', 'despina', 'enceladus', 'erinome', 'fenrir', 'gacrux', 
+  'iapetus', 'kore', 'laomedeia', 'leda', 'orus', 'puck', 'pulcherrima', 'rasalgethi', 
+  'sadachbia', 'sadaltager', 'schedar', 'sulafat', 'umbriel', 'vindemiatrix', 
+  'zephyr', 'zubenelgenubi'
+];
+
 export default function VoiceTestPage() {
-  const [voiceName, setVoiceName] = useState('Algenib');
+  const [voiceName, setVoiceName] = useState('algenib');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<{ audioDataUri?: string; error?: string } | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleTestVoice = async () => {
+    if (!voiceName) return;
     setIsLoading(true);
     setResult(null);
     const response = await testVoiceAction({ voiceName });
@@ -35,22 +43,23 @@ export default function VoiceTestPage() {
           <CardHeader>
             <CardTitle>Test a TTS Voice</CardTitle>
             <CardDescription>
-              Enter a voice name to see if it's a valid option for text-to-speech generation.
+              Select a voice from the dropdown to hear a sample.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="voiceName">Voice Name</Label>
-                <Input
-                  id="voiceName"
-                  value={voiceName}
-                  onChange={(e) => setVoiceName(e.target.value)}
-                  placeholder="e.g., Algenib, Andromeda"
-                  required
-                />
+                <Select value={voiceName} onValueChange={setVoiceName}>
+                    <SelectTrigger id="voiceName">
+                        <SelectValue placeholder="Select a voice" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {supportedVoices.map((v) => <SelectItem key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</SelectItem>)}
+                    </SelectContent>
+                </Select>
               </div>
-              <Button type="submit" disabled={isLoading} className="w-full">
+              <Button onClick={handleTestVoice} disabled={isLoading} className="w-full">
                 {isLoading ? (
                   <>
                     <Loader className="animate-spin" />
@@ -60,7 +69,7 @@ export default function VoiceTestPage() {
                   'Test Voice'
                 )}
               </Button>
-            </form>
+            </div>
 
             {result && (
               <div className="mt-6">
