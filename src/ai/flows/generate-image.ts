@@ -42,11 +42,13 @@ const generateImageFlow = ai.defineFlow(
         name: 'imageStylePrompt',
         input: { schema: z.object({ photoDataUri: z.string() }) },
         output: { schema: z.object({ styleInstructions: z.string() })},
-        prompt: `Analyze the provided image.
-        
-If the image is a simple, monochromatic, or minimalist drawing or sketch, your instructions are: "Re-imagine the subject of the drawing in a vibrant, detailed, and colorful 'Pixar' animation style. Create a beautiful scene with dynamic lighting and rich textures, bringing the simple drawing to life."
+        prompt: `Analyze the provided image and determine its style. Based on the style, provide one of the following sets of instructions.
 
-If the image is a full-color photograph or a complex, multi-colored artwork, your instructions are: "Generate a beautiful, artistic, and painterly image that visually represents the mood and subjects in this poem."
+1. If the image is a simple, monochromatic, or minimalist drawing or sketch (like a pen on paper), your instructions are: "Re-imagine the subject of the drawing in a vibrant, detailed, and colorful 'Pixar' animation style. Create a beautiful scene with dynamic lighting and rich textures, bringing the simple drawing to life."
+
+2. If the image is a complex but non-photorealistic piece of art (e.g., a cartoon, abstract art, a stylized illustration), your instructions are: "Generate a photorealistic version of this image. Interpret the subjects and composition of the original artwork and render them as if they were captured in a high-resolution photograph. Focus on realistic lighting, shadows, and textures."
+
+3. If the image is a full-color, realistic photograph, your instructions are: "Generate a beautiful, artistic, and painterly image that visually represents the mood and subjects in this poem."
 
 Image: {{media url=photoDataUri}}
         `,
