@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clipboard, Wand2, Trash2, Check, Volume2, Loader, ImageIcon, Download } from 'lucide-react';
+import { Clipboard, Wand2, Trash2, Check, Loader, ImageIcon, Download, Volume2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -44,7 +44,7 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
 
   const handleGenerateAudio = async (voice: string) => {
     setIsGeneratingAudio(true);
-    setAudioDataUri(null); // Clear previous audio
+    setAudioDataUri(null);
     const result = await textToSpeechAction({ text: poem, voiceName: voice });
     setIsGeneratingAudio(false);
 
@@ -60,16 +60,14 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
   };
 
   useEffect(() => {
-    // This effect runs when the user selects a new voice.
-    // We use isInitialMount to prevent it from running on the first render.
     if (isInitialMount.current) {
       isInitialMount.current = false;
+      // Initially generate audio with the default voice when component mounts
+      handleGenerateAudio(selectedVoice);
       return;
     }
-    
     handleGenerateAudio(selectedVoice);
-    
-  }, [selectedVoice]);
+  }, [selectedVoice, poem]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(poem);
@@ -176,30 +174,23 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                 </div>
 
                 <div className="space-y-2">
-                  <Button onClick={() => handleGenerateAudio(selectedVoice)} disabled={isGeneratingAudio} className="w-full">
-                    {isGeneratingAudio ? (
-                        <>
-                          <Loader className="animate-spin" />
-                          <span>Generating Audio...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Volume2 />
-                          <span>Read Aloud</span>
-                        </>
-                      )}
-                  </Button>
+                  {isGeneratingAudio && (
+                    <div className="flex items-center justify-center text-sm text-muted-foreground p-2">
+                        <Loader className="animate-spin mr-2" />
+                        <span>Generating Audio...</span>
+                    </div>
+                  )}
 
-                  {audioDataUri && (
+                  {audioDataUri && !isGeneratingAudio && (
                     <div className="space-y-2">
                        <div className="space-y-1.5">
-                          <Label htmlFor="voice-select">Change Voice</Label>
+                          <Label htmlFor="voice-select">Voice</Label>
                           <Select value={selectedVoice} onValueChange={setSelectedVoice}>
                               <SelectTrigger id="voice-select">
                                   <SelectValue placeholder="Select a voice" />
                               </SelectTrigger>
                               <SelectContent>
-                                  {supportedVoices.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                                  {supportedVoices.map((v) => <SelectItem key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</SelectItem>)}
                               </SelectContent>
                           </Select>
                        </div>
