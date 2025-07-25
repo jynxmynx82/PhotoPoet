@@ -66,7 +66,7 @@ export async function textToSpeechAction(input: TextToSpeechInput): Promise<Text
     }
 
     try {
-        const result = await textToSpeech({ text: input.text, voice: input.voice });
+        const result = await textToSpeech({ text: input.text });
         return { audioDataUri: result.audioDataUri };
     } catch (e) {
         console.error(e);

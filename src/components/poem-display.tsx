@@ -11,10 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { textToSpeechAction, generateImageAction } from '@/app/actions';
 import { Skeleton } from './ui/skeleton';
 
-// Moved from backend to fix "use server" export error
-type Voice = 'Algenib' | 'Sirius' | 'Andromeda' | 'Perseus' | 'Lyra';
-const voices: Voice[] = ['Algenib', 'Sirius', 'Andromeda', 'Perseus', 'Lyra'];
-
 interface PoemDisplayProps {
   photoDataUri: string;
   poem: string;
@@ -28,18 +24,16 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
   
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
-  const [selectedVoice, setSelectedVoice] = useState<Voice>('Algenib');
 
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [generatedImageDataUri, setGeneratedImageDataUri] = useState<string | null>(null);
   
-  const isInitialMount = useRef(true);
   const { toast } = useToast();
   
-  const handleGenerateAudio = async (voice: Voice) => {
+  const handleGenerateAudio = async () => {
     setIsGeneratingAudio(true);
     setAudioDataUri(null);
-    const result = await textToSpeechAction({ text: poem, voice: voice });
+    const result = await textToSpeechAction({ text: poem });
     setIsGeneratingAudio(false);
 
     if (result.error) {
@@ -52,16 +46,6 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
       setAudioDataUri(result.audioDataUri);
     }
   };
-
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-    } else if (!isGeneratingAudio) {
-      handleGenerateAudio(selectedVoice);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedVoice]);
-
 
   const handleCopy = () => {
     navigator.clipboard.writeText(poem);
@@ -170,7 +154,7 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                 </div>
 
                 {!audioDataUri && (
-                  <Button onClick={() => handleGenerateAudio(selectedVoice)} disabled={isGeneratingAudio} className="w-full">
+                  <Button onClick={handleGenerateAudio} disabled={isGeneratingAudio} className="w-full">
                     {isGeneratingAudio ? (
                       <>
                         <Loader className="animate-spin" />
@@ -187,28 +171,13 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
 
                 {audioDataUri && (
                   <div className="space-y-2">
-                    <audio controls src={audioDataUri} className="w-full" autoPlay={!isInitialMount.current}>
+                    <audio controls src={audioDataUri} className="w-full" autoPlay>
                       Your browser does not support the audio element.
                     </audio>
-                    <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1.5">
-                            <Label htmlFor="voice-select">Voice</Label>
-                             <Select value={selectedVoice} onValueChange={(value) => setSelectedVoice(value as Voice)} disabled={isGeneratingAudio}>
-                              <SelectTrigger id="voice-select">
-                                 <SelectValue placeholder="Select a voice" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                 {voices.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
-                              </SelectContent>
-                             </Select>
-                        </div>
-                        <div className="flex flex-col justify-end">
-                            <Button onClick={handleDownloadAudio} variant="outline" disabled={isGeneratingAudio}>
-                                <Download />
-                                <span>Download</span>
-                            </Button>
-                        </div>
-                    </div>
+                    <Button onClick={handleDownloadAudio} variant="outline" className="w-full">
+                        <Download />
+                        <span>Download Audio</span>
+                    </Button>
                   </div>
                 )}
                  <div className="flex flex-col sm:flex-row gap-2">
