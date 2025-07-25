@@ -34,7 +34,7 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
   
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
-  const [selectedVoice, setSelectedVoice] = useState('algenib');
+  const [selectedVoice, setSelectedVoice] = useState('charon');
 
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [generatedImageDataUri, setGeneratedImageDataUri] = useState<string | null>(null);
@@ -64,9 +64,11 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
     // We use isInitialMount to prevent it from running on the first render.
     if (isInitialMount.current) {
       isInitialMount.current = false;
-    } else {
-      handleGenerateAudio(selectedVoice);
+      return;
     }
+    
+    handleGenerateAudio(selectedVoice);
+    
   }, [selectedVoice]);
 
   const handleCopy = () => {
