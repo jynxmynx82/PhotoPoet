@@ -124,7 +124,7 @@ export default function PhotoUploader({ onPhotoUpload }: PhotoUploaderProps) {
             <p className="text-center text-muted-foreground">
               <span className="font-semibold text-primary">Click to upload</span> or drag and drop an image
             </p>
-            <p className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF up to 10MB</p>
+            <p className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF, AVIF up to 10MB</p>
             <Input
               ref={fileInputRef}
               type="file"
