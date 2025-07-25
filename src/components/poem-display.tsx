@@ -32,6 +32,7 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
   const [isCopied, setIsCopied] = useState(false);
   const [newTone, setNewTone] = useState('Joyful');
   
+  const [isAudioUiVisible, setIsAudioUiVisible] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
   const [selectedVoice, setSelectedVoice] = useState('charon');
@@ -44,7 +45,7 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
 
   const handleGenerateAudio = async (voice: string) => {
     setIsGeneratingAudio(true);
-    setAudioDataUri(null);
+    setAudioDataUri(null); // Clear previous audio
     const result = await textToSpeechAction({ text: poem, voiceName: voice });
     setIsGeneratingAudio(false);
 
@@ -59,15 +60,29 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
     }
   };
 
+  const handleInitialReadAloud = () => {
+    setIsAudioUiVisible(true);
+    handleGenerateAudio(selectedVoice);
+  }
+
+  // This effect runs only when the user changes the selected voice, not on the first render
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      // Initially generate audio with the default voice when component mounts
-      handleGenerateAudio(selectedVoice);
       return;
     }
-    handleGenerateAudio(selectedVoice);
-  }, [selectedVoice, poem]);
+    if (isAudioUiVisible) { // Only regenerate if the UI is already visible
+      handleGenerateAudio(selectedVoice);
+    }
+  }, [selectedVoice]);
+
+  // Effect to handle regenerating audio if the poem itself changes (e.g., after revision)
+  // and the audio player is already visible.
+  useEffect(() => {
+    if (!isInitialMount.current && isAudioUiVisible) {
+      handleGenerateAudio(selectedVoice);
+    }
+  }, [poem]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(poem);
@@ -174,14 +189,21 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                 </div>
 
                 <div className="space-y-2">
-                  {isGeneratingAudio && (
-                    <div className="flex items-center justify-center text-sm text-muted-foreground p-2">
-                        <Loader className="animate-spin mr-2" />
-                        <span>Generating Audio...</span>
-                    </div>
-                  )}
+                    {!isAudioUiVisible && (
+                        <Button onClick={handleInitialReadAloud} disabled={isGeneratingAudio} className="w-full">
+                            {isGeneratingAudio ? <Loader className="animate-spin" /> : <Volume2 />}
+                            <span>Read Aloud</span>
+                        </Button>
+                    )}
 
-                  {audioDataUri && !isGeneratingAudio && (
+                    {isGeneratingAudio && (
+                        <div className="flex items-center justify-center text-sm text-muted-foreground p-2">
+                            <Loader className="animate-spin mr-2" />
+                            <span>Generating Audio...</span>
+                        </div>
+                    )}
+
+                  {isAudioUiVisible && !isGeneratingAudio && audioDataUri && (
                     <div className="space-y-2">
                        <div className="space-y-1.5">
                           <Label htmlFor="voice-select">Voice</Label>
