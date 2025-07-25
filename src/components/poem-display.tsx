@@ -36,7 +36,7 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
   const [isAudioUiVisible, setIsAudioUiVisible] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
-  const [selectedVoice, setSelectedVoice] = useState('algenib');
+  const [selectedVoice, setSelectedVoice] = useState('kore');
 
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [generatedImageDataUri, setGeneratedImageDataUri] = useState<string | null>(null);
