@@ -81,12 +81,12 @@ export async function textToSpeechAction(input: TextToSpeechInput): Promise<Text
 }
 
 export async function generateImageAction(input: GenerateImageInput): Promise<GenerateImageResult> {
-    if (!input.poem) {
-        return { error: 'Poem is missing.' };
+    if (!input.poem || !input.photoDataUri) {
+        return { error: 'Poem or photo data is missing.' };
     }
 
     try {
-        const result = await generateImage({ poem: input.poem });
+        const result = await generateImage({ poem: input.poem, photoDataUri: input.photoDataUri });
         return { imageDataUri: result.imageDataUri };
     } catch (e) {
         console.error(e);

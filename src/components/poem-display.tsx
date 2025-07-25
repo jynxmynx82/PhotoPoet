@@ -118,7 +118,7 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
   
   const handleGenerateImage = async () => {
     setIsGeneratingImage(true);
-    const result = await generateImageAction({ poem });
+    const result = await generateImageAction({ poem, photoDataUri });
     setIsGeneratingImage(false);
 
     if (result.error) {
@@ -196,7 +196,7 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
                         </Button>
                     )}
 
-                    {isGeneratingAudio && (
+                    {isGeneratingAudio && isAudioUiVisible && (
                         <div className="flex items-center justify-center text-sm text-muted-foreground p-2">
                             <Loader className="animate-spin mr-2" />
                             <span>Generating Audio...</span>
