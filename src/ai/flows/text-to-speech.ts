@@ -15,7 +15,7 @@ import { googleAI } from '@genkit-ai/googleai';
 
 const TextToSpeechInputSchema = z.object({
   text: z.string().describe('The text to convert to speech.'),
-  voiceName: z.string().optional().default('charon').describe('The voice to use for the speech.'),
+  voiceName: z.string().optional().default('algenib').describe('The voice to use for the speech.'),
 });
 export type TextToSpeechInput = z.infer<typeof TextToSpeechInputSchema>;
 
@@ -68,7 +68,7 @@ const textToSpeechFlow = ai.defineFlow(
           responseModalities: ['AUDIO'],
           speechConfig: {
             voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: voiceName || 'charon' },
+              prebuiltVoiceConfig: { voiceName: voiceName || 'algenib' },
             },
           },
         },
