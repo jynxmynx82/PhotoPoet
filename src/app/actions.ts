@@ -4,6 +4,7 @@ import { generatePoem, type GeneratePoemInput } from '@/ai/flows/generate-poem';
 import { customizePoemTone, type CustomizePoemToneInput } from '@/ai/flows/customize-poem-tone';
 import { textToSpeech, type TextToSpeechInput } from '@/ai/flows/text-to-speech';
 import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
+import { testVoice, type TestVoiceInput } from '@/ai/flows/test-voice';
 
 interface GenerateResult {
   poem?: string;
@@ -22,6 +23,11 @@ interface TextToSpeechResult {
 
 interface GenerateImageResult {
     imageDataUri?: string;
+    error?: string;
+}
+
+interface TestVoiceResult {
+    audioDataUri?: string;
     error?: string;
 }
 
@@ -85,5 +91,19 @@ export async function generateImageAction(input: GenerateImageInput): Promise<Ge
     } catch (e) {
         console.error(e);
         return { error: 'An unexpected error occurred while generating the image. Please try again.' };
+    }
+}
+
+export async function testVoiceAction(input: TestVoiceInput): Promise<TestVoiceResult> {
+    if (!input.voiceName) {
+        return { error: 'Voice name is missing.' };
+    }
+
+    try {
+        const result = await testVoice(input);
+        return result;
+    } catch (e) {
+        console.error(e);
+        return { error: 'An unexpected error occurred while testing the voice.' };
     }
 }
