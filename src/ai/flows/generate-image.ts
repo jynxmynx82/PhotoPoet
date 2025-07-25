@@ -44,11 +44,11 @@ const generateImageFlow = ai.defineFlow(
         output: { schema: z.object({ styleInstructions: z.string() })},
         prompt: `Analyze the provided image.
         
-        If the image is a simple, monochromatic, or minimalist drawing or sketch, your instructions are: "Re-imagine the subject of the drawing in a vibrant, detailed, and colorful 'Pixar' animation style. Create a beautiful scene with dynamic lighting and rich textures, bringing the simple drawing to life."
-        
-        If the image is a full-color photograph or a complex, multi-colored artwork, your instructions are: "Generate a beautiful, artistic, and painterly image that visually represents the mood and subjects in this poem."
+If the image is a simple, monochromatic, or minimalist drawing or sketch, your instructions are: "Re-imagine the subject of the drawing in a vibrant, detailed, and colorful 'Pixar' animation style. Create a beautiful scene with dynamic lighting and rich textures, bringing the simple drawing to life."
 
-        Image: {{media url=photoDataUri}}
+If the image is a full-color photograph or a complex, multi-colored artwork, your instructions are: "Generate a beautiful, artistic, and painterly image that visually represents the mood and subjects in this poem."
+
+Image: {{media url=photoDataUri}}
         `,
     });
 
