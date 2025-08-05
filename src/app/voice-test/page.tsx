@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -95,6 +96,11 @@ export default function VoiceTestPage() {
           </CardContent>
         </Card>
       </main>
+      <footer className="w-full text-center p-4 mt-8">
+          <Link href="/" className="text-sm text-muted-foreground underline hover:text-primary transition-colors">
+            Back to Photo Poet
+          </Link>
+      </footer>
     </div>
   );
 }
