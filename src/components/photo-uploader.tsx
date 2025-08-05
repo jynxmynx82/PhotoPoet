@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, type DragEvent } from 'react';
-import Link from 'next/link';
 import { UploadCloud, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -139,11 +138,6 @@ export default function PhotoUploader({ onPhotoUpload }: PhotoUploaderProps) {
             Generate Poem
           </Button>
         </form>
-        <div className="text-center mt-4">
-          <Link href="/voice-test" className="text-sm text-muted-foreground underline hover:text-primary transition-colors">
-            Test Google Text-to-Speech Voices
-          </Link>
-        </div>
       </CardContent>
     </Card>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import Header from '@/components/header';
 import PhotoUploader from '@/components/photo-uploader';
 import PoemDisplay from '@/components/poem-display';
@@ -128,9 +129,9 @@ export default function Home() {
         {renderContent()}
       </main>
       <footer className="w-full text-center p-4 mt-8">
-        <p className="text-sm text-muted-foreground">
-          Powered by Generative AI
-        </p>
+        <Link href="/voice-test" className="text-sm text-muted-foreground underline hover:text-primary transition-colors">
+          Test Google Text-to-Speech Voices
+        </Link>
       </footer>
     </div>
   );
