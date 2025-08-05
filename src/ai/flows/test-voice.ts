@@ -15,6 +15,7 @@ import { googleAI } from '@genkit-ai/googleai';
 
 const TestVoiceInputSchema = z.object({
   voiceName: z.string().describe('The name of the voice to test.'),
+  text: z.string().optional().describe('Custom text for the voice to speak.'),
 });
 export type TestVoiceInput = z.infer<typeof TestVoiceInputSchema>;
 
@@ -62,8 +63,9 @@ const testVoiceFlow = ai.defineFlow(
     inputSchema: TestVoiceInputSchema,
     outputSchema: TestVoiceOutputSchema,
   },
-  async ({voiceName}) => {
+  async ({voiceName, text}) => {
     try {
+        const promptText = text || `Hello, this is a test of the ${voiceName} voice.`;
         const { media } = await ai.generate({
             model: googleAI.model('gemini-2.5-flash-preview-tts'),
             config: {
@@ -74,7 +76,7 @@ const testVoiceFlow = ai.defineFlow(
                 },
               },
             },
-            prompt: `Hello, this is a test of the ${voiceName} voice.`,
+            prompt: promptText,
           });
     
           if (!media) {

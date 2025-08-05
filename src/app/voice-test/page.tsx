@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { testVoiceAction } from '@/app/actions';
 import { Loader } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Textarea } from '@/components/ui/textarea';
 
 const supportedVoices = [
   'achernar', 'achird', 'algenib', 'algieba', 'alnilam', 'aoede', 'autonoe', 
@@ -19,7 +20,8 @@ const supportedVoices = [
 ];
 
 export default function VoiceTestPage() {
-  const [voiceName, setVoiceName] = useState('algenib');
+  const [voiceName, setVoiceName] = useState('achernar');
+  const [customText, setCustomText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<{ audioDataUri?: string; error?: string } | null>(null);
 
@@ -27,7 +29,7 @@ export default function VoiceTestPage() {
     if (!voiceName) return;
     setIsLoading(true);
     setResult(null);
-    const response = await testVoiceAction({ voiceName });
+    const response = await testVoiceAction({ voiceName, text: customText });
     setResult(response);
     setIsLoading(false);
   };
@@ -44,7 +46,7 @@ export default function VoiceTestPage() {
           <CardHeader>
             <CardTitle>Test the AI Voices</CardTitle>
             <CardDescription>
-              This page lets you sample the different AI voices available to narrate your poem. Select a voice from the list below and press 'Test Voice' to hear what it sounds like.
+              Select a voice, type in some text, and click 'Test Voice' to hear how it sounds. This is a great way to find the perfect narrator for your poem.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -59,6 +61,16 @@ export default function VoiceTestPage() {
                         {supportedVoices.map((v) => <SelectItem key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</SelectItem>)}
                     </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="customText">Custom Text (Optional)</Label>
+                <Textarea 
+                  id="customText"
+                  placeholder={`Hello, this is a test of the ${voiceName} voice.`}
+                  value={customText}
+                  onChange={(e) => setCustomText(e.target.value)}
+                  className="resize-none"
+                />
               </div>
               <Button onClick={handleTestVoice} disabled={isLoading} className="w-full">
                 {isLoading ? (
@@ -84,7 +96,7 @@ export default function VoiceTestPage() {
                     <>
                         <Alert>
                             <AlertTitle>Success!</AlertTitle>
-                            <AlertDescription>The voice "{voiceName}" is valid. Listen below.</AlertDescription>
+                            <AlertDescription>Your audio is ready. Listen below.</AlertDescription>
                         </Alert>
                         <audio controls src={result.audioDataUri} className="w-full mt-4" autoPlay>
                             Your browser does not support the audio element.
