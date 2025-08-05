@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -88,15 +89,13 @@ export default function VoiceTestPage() {
               <div className="mt-6">
                 {result.error && (
                   <Alert variant="destructive">
-                    <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>{result.error}</AlertDescription>
+                    <AlertTitle>{result.error}</AlertTitle>
                   </Alert>
                 )}
                 {result.audioDataUri && (
                     <>
                         <Alert>
-                            <AlertTitle>Success!</AlertTitle>
-                            <AlertDescription>Your audio is ready. Listen below.</AlertDescription>
+                            <AlertTitle>Success! Your audio is ready below.</AlertTitle>
                         </Alert>
                         <audio controls src={result.audioDataUri} className="w-full mt-4" autoPlay>
                             Your browser does not support the audio element.
