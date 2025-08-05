@@ -29,6 +29,33 @@ const supportedVoices = [
   'zephyr', 'zubenelgenubi'
 ];
 
+// Function to get image dimensions from data URI
+const getImageDimensions = (dataUri: string): Promise<{ width: number; height: number }> => {
+    return new Promise((resolve) => {
+        const img = document.createElement('img');
+        img.onload = () => {
+            resolve({ width: img.width, height: img.height });
+        };
+        img.src = dataUri;
+    });
+};
+
+// Function to determine the closest aspect ratio
+const getAspectRatio = (width: number, height: number): '1:1' | '16:9' | '9:16' => {
+    const ratio = width / height;
+    const ratio11 = Math.abs(ratio - 1);
+    const ratio169 = Math.abs(ratio - 16 / 9);
+    const ratio916 = Math.abs(ratio - 9 / 16);
+
+    if (ratio11 < ratio169 && ratio11 < ratio916) {
+        return '1:1';
+    } else if (ratio169 < ratio916) {
+        return '16:9';
+    } else {
+        return '9:16';
+    }
+};
+
 export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: PoemDisplayProps) {
   const [isCopied, setIsCopied] = useState(false);
   const [newTone, setNewTone] = useState('Joyful');
@@ -119,7 +146,10 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
   
   const handleGenerateImage = async () => {
     setIsGeneratingImage(true);
-    const result = await generateImageAction({ poem, photoDataUri });
+    const { width, height } = await getImageDimensions(photoDataUri);
+    const aspectRatio = getAspectRatio(width, height);
+    
+    const result = await generateImageAction({ poem, photoDataUri, aspectRatio });
     setIsGeneratingImage(false);
 
     if (result.error) {

@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -18,6 +19,7 @@ const GenerateImageInputSchema = z.object({
     .describe(
       "The original photo, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
+  aspectRatio: z.enum(['1:1', '16:9', '9:16']).optional().default('1:1').describe('The desired aspect ratio for the generated image.'),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 
@@ -36,7 +38,7 @@ const generateImageFlow = ai.defineFlow(
     inputSchema: GenerateImageInputSchema,
     outputSchema: GenerateImageOutputSchema,
   },
-  async ({poem, photoDataUri}) => {
+  async ({poem, photoDataUri, aspectRatio}) => {
 
     const imageStylePrompt = ai.definePrompt({
         name: 'imageStylePrompt',
@@ -59,7 +61,7 @@ Image: {{media url=photoDataUri}}
 
     const {media} = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `${styleInstructions}. Poem for inspiration: ${poem}`,
+      prompt: `${styleInstructions}. Poem for inspiration: ${poem}. The image should have an aspect ratio of ${aspectRatio}.`,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
       },

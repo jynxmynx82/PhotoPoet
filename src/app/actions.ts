@@ -1,3 +1,4 @@
+
 'use server';
 
 import { generatePoem, type GeneratePoemInput } from '@/ai/flows/generate-poem';
@@ -86,7 +87,7 @@ export async function generateImageAction(input: GenerateImageInput): Promise<Ge
     }
 
     try {
-        const result = await generateImage({ poem: input.poem, photoDataUri: input.photoDataUri });
+        const result = await generateImage(input);
         return { imageDataUri: result.imageDataUri };
     } catch (e) {
         console.error(e);
