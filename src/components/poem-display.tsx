@@ -100,7 +100,7 @@ const addWatermark = (dataUri: string): Promise<string> => {
             ctx.save();
             
             // Translate and rotate context
-            const margin = fontSize * 1.5; // Increased margin
+            const margin = fontSize * 1.5;
             ctx.translate(canvas.width - margin, canvas.height - margin);
             ctx.rotate(-Math.PI / 4); // -45 degrees
 
