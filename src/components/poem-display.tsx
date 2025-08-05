@@ -41,19 +41,29 @@ const getImageDimensions = (dataUri: string): Promise<{ width: number; height: n
 };
 
 // Function to determine the closest aspect ratio
-const getAspectRatio = (width: number, height: number): '1:1' | '16:9' | '9:16' => {
+const getAspectRatio = (width: number, height: number): '1:1' | '16:9' | '9:16' | '4:3' | '3:4' => {
     const ratio = width / height;
-    const ratio11 = Math.abs(ratio - 1);
-    const ratio169 = Math.abs(ratio - 16 / 9);
-    const ratio916 = Math.abs(ratio - 9 / 16);
+    
+    const ratios = {
+        '1:1': 1,
+        '16:9': 16/9,
+        '9:16': 9/16,
+        '4:3': 4/3,
+        '3:4': 3/4,
+    };
 
-    if (ratio11 < ratio169 && ratio11 < ratio916) {
-        return '1:1';
-    } else if (ratio169 < ratio916) {
-        return '16:9';
-    } else {
-        return '9:16';
+    let closestRatio: keyof typeof ratios = '1:1';
+    let minDifference = Math.abs(ratio - ratios['1:1']);
+
+    for (const r of (Object.keys(ratios) as (keyof typeof ratios)[])) {
+        const difference = Math.abs(ratio - ratios[r]);
+        if (difference < minDifference) {
+            minDifference = difference;
+            closestRatio = r;
+        }
     }
+    
+    return closestRatio;
 };
 
 // Function to add a watermark to an image

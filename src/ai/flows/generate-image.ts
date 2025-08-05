@@ -19,7 +19,7 @@ const GenerateImageInputSchema = z.object({
     .describe(
       "The original photo, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
-  aspectRatio: z.enum(['1:1', '16:9', '9:16']).optional().default('1:1').describe('The desired aspect ratio for the generated image.'),
+  aspectRatio: z.enum(['1:1', '16:9', '9:16', '4:3', '3:4']).optional().default('1:1').describe('The desired aspect ratio for the generated image.'),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 
