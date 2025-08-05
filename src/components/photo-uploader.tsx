@@ -141,7 +141,7 @@ export default function PhotoUploader({ onPhotoUpload }: PhotoUploaderProps) {
         </form>
         <div className="text-center mt-4">
           <Link href="/voice-test" className="text-sm text-muted-foreground underline hover:text-primary transition-colors">
-            Test TTS Voices
+            Test Google Text-to-Speech Voices
           </Link>
         </div>
       </CardContent>
