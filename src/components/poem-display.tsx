@@ -56,6 +56,66 @@ const getAspectRatio = (width: number, height: number): '1:1' | '16:9' | '9:16' 
     }
 };
 
+// Function to add a watermark to an image
+const addWatermark = (dataUri: string): Promise<string> => {
+    return new Promise((resolve) => {
+        const img = document.createElement('img');
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                resolve(dataUri); // Return original if canvas is not supported
+                return;
+            }
+
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            // Draw the original image
+            ctx.drawImage(img, 0, 0);
+
+            // Watermark settings
+            const watermarkText = 'Photo Poet';
+            const iconSize = Math.min(img.width, img.height) * 0.04;
+            const fontSize = Math.min(img.width, img.height) * 0.03;
+            ctx.font = `italic ${fontSize}px 'Belleza', sans-serif`;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'bottom';
+            
+            // Feather icon SVG path
+            const featherPath = new Path2D("M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5zM16 8l-6 6M21.41 21.41l-2-2");
+
+            // Save the current canvas state
+            ctx.save();
+            
+            // Translate and rotate context
+            const margin = fontSize * 0.75;
+            ctx.translate(canvas.width - margin, canvas.height - margin);
+            ctx.rotate(-Math.PI / 4); // -45 degrees
+
+            // Draw text and icon
+            ctx.fillText(watermarkText, 0, 0);
+            const textWidth = ctx.measureText(watermarkText).width;
+            ctx.save();
+            ctx.translate(-(textWidth + iconSize * 0.5), -iconSize * 0.6);
+            ctx.scale(iconSize / 24, iconSize / 24); // Scale the icon
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 2 * (24 / iconSize);
+            ctx.stroke(featherPath);
+            ctx.restore();
+
+
+            // Restore the canvas state
+            ctx.restore();
+
+            resolve(canvas.toDataURL('image/png'));
+        };
+        img.src = dataUri;
+    });
+};
+
+
 export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: PoemDisplayProps) {
   const [isCopied, setIsCopied] = useState(false);
   const [newTone, setNewTone] = useState('Joyful');
@@ -150,12 +210,14 @@ export default function PoemDisplay({ photoDataUri, poem, onRevise, onReset }: P
     const aspectRatio = getAspectRatio(width, height);
     
     const result = await generateImageAction({ poem, photoDataUri, aspectRatio });
-    setIsGeneratingImage(false);
-
+    
     if (result.error) {
         toast({ variant: 'destructive', title: 'Error Generating Image', description: result.error });
+        setIsGeneratingImage(false);
     } else if (result.imageDataUri) {
-        setGeneratedImageDataUri(result.imageDataUri);
+        const watermarkedImage = await addWatermark(result.imageDataUri);
+        setGeneratedImageDataUri(watermarkedImage);
+        setIsGeneratingImage(false);
     }
   };
 
