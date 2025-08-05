@@ -41,9 +41,9 @@ export default function VoiceTestPage() {
       <main className="flex-grow flex items-center justify-center w-full">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Test a TTS Voice</CardTitle>
+            <CardTitle>Test the AI Voices</CardTitle>
             <CardDescription>
-              Select a voice from the dropdown to hear a sample.
+              This page lets you sample the different AI voices available to narrate your poem. Select a voice from the list below and press 'Test Voice' to hear what it sounds like.
             </CardDescription>
           </CardHeader>
           <CardContent>
