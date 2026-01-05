@@ -48,10 +48,28 @@ export default function Home() {
     setAppState('describe_image');
   };
 
+  // Function to handle the final step of poem generation, can be called from multiple flows
+  const generatePoemFromImage = async (imageDataUri: string) => {
+      setPhotoDataUri(imageDataUri);
+      setAppState('loading_poem');
+      setError(null);
+
+      const poemResult = await generatePoemAction({ photoDataUri: imageDataUri, tone, style });
+      
+      if (poemResult.error) {
+        setError(poemResult.error);
+        setAppState('error');
+        toast({ variant: 'destructive', title: 'Error Generating Poem', description: poemResult.error });
+      } else if (poemResult.poem) {
+        setPoem(poemResult.poem);
+        setOriginalPoem(poemResult.poem);
+        setAppState('poem_ready');
+      }
+  }
+
   // New combined flow for image synthesis then poem generation
   const handleGenerateFinalImageAndPoem = async (prompt: string) => {
     setAppState('loading_image');
-    setPhotoDataUri(null);
     setError(null);
 
     // Step 1: Generate the synthesized image
@@ -70,41 +88,14 @@ export default function Home() {
     }
     
     // Step 2: Use the new image to generate a poem
-    setPhotoDataUri(imageResult.imageDataUri);
-    setAppState('loading_poem');
-
-    const poemResult = await generatePoemAction({ photoDataUri: imageResult.imageDataUri, tone, style });
-    
-    if (poemResult.error) {
-      setError(poemResult.error);
-      setAppState('error');
-      toast({ variant: 'destructive', title: 'Error Generating Poem', description: poemResult.error });
-    } else if (poemResult.poem) {
-      setPoem(poemResult.poem);
-      setOriginalPoem(poemResult.poem);
-      setAppState('poem_ready');
-    }
+    await generatePoemFromImage(imageResult.imageDataUri);
   };
   
   // Legacy poem generation handler
   const handleSinglePhotoUpload = async (dataUri: string, selectedTone: string, selectedStyle: string) => {
-    setAppState('loading_poem');
-    setPhotoDataUri(dataUri);
     setTone(selectedTone);
     setStyle(selectedStyle);
-    setError(null);
-    
-    const result = await generatePoemAction({ photoDataUri: dataUri, tone: selectedTone, style: selectedStyle });
-
-    if (result.error) {
-      setError(result.error);
-      setAppState('error');
-      toast({ variant: 'destructive', title: 'Error Generating Poem', description: result.error });
-    } else if (result.poem) {
-      setPoem(result.poem);
-      setOriginalPoem(result.poem);
-      setAppState('poem_ready');
-    }
+    await generatePoemFromImage(dataUri);
   };
   
   const handleRevisePoem = async (newTone: string) => {
@@ -149,7 +140,7 @@ export default function Home() {
                     <div className="grid grid-cols-3 gap-2 mb-6">
                         {selectedImages.map((uri, i) => (
                             <div key={i} className="relative aspect-square rounded-md overflow-hidden bg-muted">
-                                <Image src={uri} alt={`Selected image ${i+1}`} layout="fill" objectFit="cover" />
+                                <Image src={uri} alt={`Selected image ${i+1}`} fill={true} objectFit="cover" />
                             </div>
                         ))}
                     </div>
@@ -180,7 +171,7 @@ export default function Home() {
                     <h2 className="text-xl font-headline mb-4">Synthesizing Your Image...</h2>
                     <Skeleton className="w-full aspect-square rounded-lg" />
                     <div className="grid grid-cols-3 gap-2">
-                        {selectedImages.map((uri, i) => (
+                        {selectedImages.map((_, i) => (
                            <Skeleton key={i} className="w-full aspect-square rounded-md" />
                         ))}
                     </div>
@@ -197,7 +188,7 @@ export default function Home() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                     {photoDataUri && <Image src={photoDataUri} alt="Generated inspiration" width={500} height={500} className="w-full aspect-square rounded-lg object-contain" />}
                     <div className="space-y-4">
-                      <Skeleton className="h-8 w-3/4" />
+                      <h2 className="font-headline text-2xl lg:text-3xl text-primary mb-4">Generating Poem...</h2>
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-5/6" />
@@ -242,5 +233,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

@@ -49,7 +49,7 @@ export default function ImageDescriptionDialog({
           <div className="grid grid-cols-3 gap-2">
             {images.map((uri, i) => (
               <div key={i} className="relative aspect-square rounded-md overflow-hidden bg-muted">
-                <Image src={uri} alt={`Selected image ${i + 1}`} layout="fill" objectFit="cover" />
+                <Image src={uri} alt={`Selected image ${i + 1}`} fill={true} objectFit="cover" />
               </div>
             ))}
           </div>
@@ -69,7 +69,7 @@ export default function ImageDescriptionDialog({
             Cancel
           </Button>
           <Button type="submit" onClick={handleSubmit} disabled={!description.trim()}>
-            Generate Image
+            Generate Image & Poem
           </Button>
         </DialogFooter>
       </DialogContent>

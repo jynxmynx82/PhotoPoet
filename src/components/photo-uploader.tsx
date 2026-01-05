@@ -218,11 +218,13 @@ export default function PhotoUploader({ onImagesSelected, onSingleImageUpload, o
           )}
         </div>
 
-        <div className="flex items-center space-x-2">
-            <Separator className="flex-grow" />
-            <span className="text-xs text-muted-foreground">OR</span>
-            <Separator className="flex-grow" />
+        <div className="relative w-full flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center">
+                <Separator className="w-full" />
+            </div>
+            <span className="relative px-2 bg-card text-xs text-muted-foreground">OR</span>
         </div>
+
 
         {/* Direct Poem Generation Section */}
         <div className="rounded-lg border p-4 bg-secondary/30">
