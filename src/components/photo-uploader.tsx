@@ -171,7 +171,7 @@ export default function PhotoUploader({ onImagesSelected, onSingleImageUpload, o
         </div>
 
         {/* Image Synthesis Section */}
-        <div className="rounded-lg border p-4">
+        <div className="rounded-lg border p-4 text-center">
           <Label className="text-base font-medium">Image Synthesis</Label>
           <p className="text-sm text-muted-foreground mb-4">Combine 2-3 images to create a new one, then generate a poem from it.</p>
           <div
@@ -188,7 +188,7 @@ export default function PhotoUploader({ onImagesSelected, onSingleImageUpload, o
             <p className="text-center text-muted-foreground">
               <span className="font-semibold text-primary">Click to upload</span> or drag and drop
             </p>
-            <p className="text-xs text-muted-foreground mt-1">Up to {MAX_FILES} images, {MAX_FILE_SIZE_MB}MB each</p>
+            <p className="text-xs text-muted-foreground mt-1">Up to {MAX_FILES} images, {MAX_FILE_SIZE_MB} each</p>
             <Input
               ref={fileInputRef}
               type="file"
@@ -227,7 +227,7 @@ export default function PhotoUploader({ onImagesSelected, onSingleImageUpload, o
 
 
         {/* Direct Poem Generation Section */}
-        <div className="rounded-lg border p-4 bg-secondary/30">
+        <div className="rounded-lg border p-4 text-center bg-primary/5">
            <Label className="text-base font-medium">Direct Poem Generation</Label>
            <p className="text-sm text-muted-foreground mb-4">Turn a single photo into a beautiful poem.</p>
            <Button onClick={handleLegacyPoem} className="w-full" variant="secondary">
@@ -239,3 +239,5 @@ export default function PhotoUploader({ onImagesSelected, onSingleImageUpload, o
     </Card>
   );
 }
+
+  
