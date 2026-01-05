@@ -1,70 +1,123 @@
+
 'use client';
 
-import { useState, useRef, type DragEvent } from 'react';
-import { UploadCloud, Sparkles } from 'lucide-react';
+import { useState, useRef, type DragEvent, type ChangeEvent } from 'react';
+import Image from 'next/image';
+import { UploadCloud, Sparkles, X } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { Separator } from './ui/separator';
 
 interface PhotoUploaderProps {
-  onPhotoUpload: (dataUri: string, tone: string, style: string) => void;
+  onImagesSelected: (dataUris: string[]) => void;
+  onSingleImageUpload: (dataUri: string, tone: string, style: string) => void;
 }
 
-export default function PhotoUploader({ onPhotoUpload }: PhotoUploaderProps) {
+const MAX_FILES = 3;
+const MAX_FILE_SIZE_MB = 4;
+
+export default function PhotoUploader({ onImagesSelected, onSingleImageUpload }: PhotoUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [tone, setTone] = useState('Reflective');
   const [style, setStyle] = useState('Free Verse');
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleFile = (file: File) => {
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUri = e.target?.result as string;
-        onPhotoUpload(dataUri, tone, style);
-      };
-      reader.readAsDataURL(file);
-    } else {
+  const handleFiles = (files: FileList) => {
+    if (selectedFiles.length + files.length > MAX_FILES) {
       toast({
         variant: 'destructive',
-        title: 'Invalid File',
-        description: 'Please upload an image file.',
+        title: 'Too many files',
+        description: `You can upload a maximum of ${MAX_FILES} images.`,
       });
+      return;
     }
+
+    const newFiles: string[] = [];
+    const filePromises = Array.from(files).map(file => {
+      return new Promise<void>((resolve, reject) => {
+        if (!file.type.startsWith('image/')) {
+          reject('Please upload only image files.');
+          return;
+        }
+        if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+          reject(`File "${file.name}" exceeds the ${MAX_FILE_SIZE_MB}MB size limit.`);
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          newFiles.push(e.target?.result as string);
+          resolve();
+        };
+        reader.onerror = () => reject('Error reading file.');
+        reader.readAsDataURL(file);
+      });
+    });
+
+    Promise.all(filePromises)
+      .then(() => {
+        setSelectedFiles(prev => [...prev, ...newFiles]);
+      })
+      .catch(errorMsg => {
+        toast({ variant: 'destructive', title: 'Upload Error', description: errorMsg });
+      });
   };
 
-  const handleDragEnter = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
+  const handleDragEnter = (e: DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
+  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); };
 
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFile(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files) {
+      handleFiles(e.dataTransfer.files);
+    }
+  };
+  
+  const handleFileInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleFiles(e.target.files);
     }
   };
 
-  const handleClick = () => {
-    fileInputRef.current?.click();
+  const handleNext = () => {
+    if (selectedFiles.length > 0) {
+      onImagesSelected(selectedFiles);
+    }
+  };
+  
+  const handleLegacyPoem = () => {
+    if (fileInputRef.current) {
+        fileInputRef.current.accept = 'image/*';
+        fileInputRef.current.multiple = false;
+        fileInputRef.current.onchange = (e: ChangeEvent<HTMLInputElement>) => {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                 if (file.size > 10 * 1024 * 1024) { // 10MB limit for legacy
+                    toast({ variant: 'destructive', title: 'File too large', description: 'Please select an image smaller than 10MB.' });
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    onSingleImageUpload(ev.target?.result as string, tone, style);
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+        fileInputRef.current.click();
+    }
   };
 
   const tones = ['Reflective', 'Joyful', 'Melancholic', 'Romantic', 'Humorous', 'Dramatic'];
@@ -73,71 +126,100 @@ export default function PhotoUploader({ onPhotoUpload }: PhotoUploaderProps) {
   return (
     <Card className="w-full max-w-lg mx-auto animate-fade-in">
       <CardHeader className="text-center">
-        <CardTitle>Create Poetry from a Photo</CardTitle>
-        <CardDescription>Upload an image and watch AI turn it into a unique poem.</CardDescription>
+        <CardTitle>Create Your Artwork</CardTitle>
+        <CardDescription>Synthesize a new image from multiple photos, or generate a poem from one.</CardDescription>
       </CardHeader>
-      <CardContent>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleClick();
-          }}
-          className="space-y-6"
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="tone">Poem Tone</Label>
-              <Select name="tone" value={tone} onValueChange={setTone}>
-                <SelectTrigger id="tone">
-                  <SelectValue placeholder="Select a tone" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tones.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="style">Poem Style</Label>
-              <Select name="style" value={style} onValueChange={setStyle}>
-                <SelectTrigger id="style">
-                  <SelectValue placeholder="Select a style" />
-                </SelectTrigger>
-                <SelectContent>
-                  {styles.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
+      <CardContent className="space-y-6">
+        
+        {/* New Multi-Image Uploader */}
+        <div>
+          <Label className="text-base font-medium">Image Synthesis (2-3 photos)</Label>
+          <p className="text-sm text-muted-foreground mb-4">Combine multiple images to create something new.</p>
           <div
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            onClick={handleClick}
-            className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+            onClick={() => fileInputRef.current?.click()}
+            className={`flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
               isDragging ? 'border-primary bg-primary/10' : 'border-input hover:border-primary/70'
             }`}
           >
-            <UploadCloud className="w-12 h-12 text-muted-foreground mb-4" />
+            <UploadCloud className="w-10 h-10 text-muted-foreground mb-3" />
             <p className="text-center text-muted-foreground">
-              <span className="font-semibold text-primary">Click to upload</span> or drag and drop an image
+              <span className="font-semibold text-primary">Click to upload</span> or drag and drop
             </p>
-            <p className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF, AVIF, WEBP up to 10MB</p>
+            <p className="text-xs text-muted-foreground mt-1">Up to {MAX_FILES} images, {MAX_FILE_SIZE_MB}MB each</p>
             <Input
               ref={fileInputRef}
               type="file"
               className="hidden"
               accept="image/*"
-              onChange={(e) => e.target.files && handleFile(e.target.files[0])}
+              multiple
+              onChange={handleFileInputChange}
             />
           </div>
 
-          <Button type="submit" className="w-full" size="lg">
-            <Sparkles className="mr-2 h-4 w-4" />
-            Generate Poem
-          </Button>
-        </form>
+          {selectedFiles.length > 0 && (
+            <div className="mt-4 space-y-4">
+              <div className="grid grid-cols-3 gap-2">
+                {selectedFiles.map((uri, index) => (
+                  <div key={index} className="relative group aspect-square rounded-md overflow-hidden">
+                    <Image src={uri} alt={`upload-preview-${index}`} layout="fill" objectFit="cover" />
+                    <button onClick={() => removeFile(index)} className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <Button onClick={handleNext} className="w-full" disabled={selectedFiles.length < 2}>
+                Next
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center space-x-2">
+            <Separator className="flex-grow" />
+            <span className="text-xs text-muted-foreground">OR</span>
+            <Separator className="flex-grow" />
+        </div>
+
+        {/* Legacy Poem Generator */}
+        <div>
+           <Label className="text-base font-medium">Generate a Poem (1 photo)</Label>
+           <p className="text-sm text-muted-foreground mb-4">Turn a single photo into a beautiful poem.</p>
+           <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                    <Label htmlFor="tone">Poem Tone</Label>
+                    <Select name="tone" value={tone} onValueChange={setTone}>
+                        <SelectTrigger id="tone">
+                        <SelectValue placeholder="Select a tone" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {tones.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    </div>
+                    <div className="space-y-2">
+                    <Label htmlFor="style">Poem Style</Label>
+                    <Select name="style" value={style} onValueChange={setStyle}>
+                        <SelectTrigger id="style">
+                        <SelectValue placeholder="Select a style" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {styles.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    </div>
+                </div>
+                <Button onClick={handleLegacyPoem} className="w-full" variant="secondary">
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Select Photo & Generate Poem
+                </Button>
+           </div>
+        </div>
       </CardContent>
     </Card>
   );

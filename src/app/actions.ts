@@ -82,8 +82,8 @@ export async function textToSpeechAction(input: TextToSpeechInput): Promise<Text
 }
 
 export async function generateImageAction(input: GenerateImageInput): Promise<GenerateImageResult> {
-    if (!input.poem || !input.photoDataUri) {
-        return { error: 'Poem or photo data is missing.' };
+    if ((!input.photoDataUri && !input.photoDataUris) || (!input.poem && !input.prompt)) {
+        return { error: 'Required image data or prompt is missing.' };
     }
 
     try {
