@@ -7,7 +7,7 @@ import Header from '@/components/header';
 import PhotoUploader from '@/components/photo-uploader';
 import PoemDisplay from '@/components/poem-display';
 import ImageDescriptionDialog from '@/components/image-description-dialog';
-import { generatePoemAction, generateImageAction } from '@/app/actions';
+import { generatePoemAction, generateImageAction, customizePoemAction } from '@/app/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,20 +15,21 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Trash2 } from 'lucide-react';
 
-type AppState = 'initial' | 'images_selected' | 'describe_image' | 'loading' | 'final_image' | 'error';
-type LegacyState = 'legacy_loading' | 'poem_ready';
+type AppState = 'initial' | 'images_selected' | 'describe_image' | 'loading_image' | 'loading_poem' | 'poem_ready' | 'error';
 
 export default function Home() {
-  // New multi-image flow state
+  // Combined state
   const [appState, setAppState] = useState<AppState>('initial');
+
+  // Image and Poem data
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
-  const [finalImage, setFinalImage] = useState<string | null>(null);
-  
-  // State for the original poem flow
-  const [legacyState, setLegacyState] = useState<LegacyState | null>(null);
   const [photoDataUri, setPhotoDataUri] = useState<string | null>(null);
   const [poem, setPoem] = useState<string | null>(null);
   const [originalPoem, setOriginalPoem] = useState<string | null>(null);
+  
+  // Poem generation settings
+  const [tone, setTone] = useState('Reflective');
+  const [style, setStyle] = useState('Free Verse');
 
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -37,101 +38,107 @@ export default function Home() {
     setSelectedImages(dataUris);
     setAppState('images_selected');
   };
+  
+  const handleSettingsChange = (newTone: string, newStyle: string) => {
+    setTone(newTone);
+    setStyle(newStyle);
+  };
 
   const handleOpenDescriptionDialog = () => {
     setAppState('describe_image');
   };
 
-  const handleGenerateFinalImage = async (prompt: string) => {
-    setAppState('loading');
-    setFinalImage(null);
+  // New combined flow for image synthesis then poem generation
+  const handleGenerateFinalImageAndPoem = async (prompt: string) => {
+    setAppState('loading_image');
+    setPhotoDataUri(null);
     setError(null);
 
-    const result = await generateImageAction({
+    // Step 1: Generate the synthesized image
+    const imageResult = await generateImageAction({
       photoDataUris: selectedImages,
       prompt: prompt,
-      aspectRatio: '1:1', // Defaulting to 1:1 for synthesized images for now
+      aspectRatio: '1:1',
     });
 
-    if (result.error) {
-      setError(result.error);
+    if (imageResult.error || !imageResult.imageDataUri) {
+      setError(imageResult.error || 'Failed to generate image.');
       setAppState('error');
-      toast({ variant: 'destructive', title: 'Error Generating Image', description: result.error });
-      setAppState('images_selected'); // Go back to let the user try again
-    } else if (result.imageDataUri) {
-      setFinalImage(result.imageDataUri);
-      setAppState('final_image');
+      toast({ variant: 'destructive', title: 'Error Generating Image', description: imageResult.error });
+      setAppState('images_selected');
+      return;
+    }
+    
+    // Step 2: Use the new image to generate a poem
+    setPhotoDataUri(imageResult.imageDataUri);
+    setAppState('loading_poem');
+
+    const poemResult = await generatePoemAction({ photoDataUri: imageResult.imageDataUri, tone, style });
+    
+    if (poemResult.error) {
+      setError(poemResult.error);
+      setAppState('error');
+      toast({ variant: 'destructive', title: 'Error Generating Poem', description: poemResult.error });
+    } else if (poemResult.poem) {
+      setPoem(poemResult.poem);
+      setOriginalPoem(poemResult.poem);
+      setAppState('poem_ready');
     }
   };
   
   // Legacy poem generation handler
-  const handlePhotoUpload = async (dataUri: string, tone: string, style: string) => {
-    setLegacyState('legacy_loading');
+  const handleSinglePhotoUpload = async (dataUri: string, selectedTone: string, selectedStyle: string) => {
+    setAppState('loading_poem');
     setPhotoDataUri(dataUri);
+    setTone(selectedTone);
+    setStyle(selectedStyle);
     setError(null);
     
-    const result = await generatePoemAction({ photoDataUri: dataUri, tone, style });
+    const result = await generatePoemAction({ photoDataUri: dataUri, tone: selectedTone, style: selectedStyle });
 
     if (result.error) {
       setError(result.error);
-      setLegacyState(null);
       setAppState('error');
       toast({ variant: 'destructive', title: 'Error Generating Poem', description: result.error });
     } else if (result.poem) {
       setPoem(result.poem);
       setOriginalPoem(result.poem);
-      setLegacyState('poem_ready');
+      setAppState('poem_ready');
     }
   };
+  
+  const handleRevisePoem = async (newTone: string) => {
+    if (!originalPoem) return;
+    
+    // To show loading state on the poem text
+    setPoem("Revising in a new tone...");
+
+    const result = await customizePoemAction({ originalPoem, tone: newTone });
+
+    if (result.error) {
+      toast({ variant: 'destructive', title: 'Error Revising Poem', description: result.error });
+      setPoem(originalPoem); // Restore original poem on error
+    } else if (result.revisedPoem) {
+      setPoem(result.revisedPoem);
+    }
+  }
 
   const handleReset = () => {
     setAppState('initial');
     setSelectedImages([]);
-    setFinalImage(null);
-    setLegacyState(null);
     setPhotoDataUri(null);
     setPoem(null);
     setOriginalPoem(null);
     setError(null);
+    setTone('Reflective');
+    setStyle('Free Verse');
   };
 
   const renderContent = () => {
-    if (legacyState === 'legacy_loading') {
-      return (
-        <div className="w-full max-w-4xl animate-fade-in">
-          <Card>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                {photoDataUri && <Skeleton className="w-full aspect-square rounded-lg" />}
-                <div className="space-y-4">
-                  <Skeleton className="h-8 w-3/4" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-5/6" />
-                  <Skeleton className="h-4 w-full" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
-
-    if (legacyState === 'poem_ready' && photoDataUri && poem) {
-      return (
-        <PoemDisplay
-          photoDataUri={photoDataUri}
-          poem={poem}
-          onRevise={() => {}} // This part of the flow is now secondary
-          onReset={handleReset}
-        />
-      );
-    }
-    
     switch (appState) {
       case 'initial':
-      case 'error': // Show uploader on error to allow restart
-        return <PhotoUploader onImagesSelected={handleImagesSelected} onSingleImageUpload={handlePhotoUpload} />;
+      case 'error':
+        return <PhotoUploader onImagesSelected={handleImagesSelected} onSingleImageUpload={handleSinglePhotoUpload} onSettingsChange={handleSettingsChange} initialTone={tone} initialStyle={style} />;
       
       case 'images_selected':
         return (
@@ -160,12 +167,12 @@ export default function Home() {
           <ImageDescriptionDialog 
             isOpen={true}
             onClose={() => setAppState('images_selected')}
-            onSubmit={handleGenerateFinalImage}
+            onSubmit={handleGenerateFinalImageAndPoem}
             images={selectedImages}
           />
         );
         
-      case 'loading':
+      case 'loading_image':
         return (
            <div className="w-full max-w-lg mx-auto animate-fade-in text-center">
              <Card>
@@ -182,26 +189,38 @@ export default function Home() {
            </div>
         );
 
-      case 'final_image':
-        if (finalImage) {
-          return (
-            <div className="w-full max-w-lg mx-auto animate-fade-in text-center">
+      case 'loading_poem':
+         return (
+            <div className="w-full max-w-4xl animate-fade-in">
               <Card>
-                  <CardContent className="p-6">
-                      <h2 className="text-2xl font-headline mb-4 text-primary">Your New Creation!</h2>
-                      <div className="relative aspect-square w-full rounded-lg overflow-hidden shadow-lg bg-black/5 mb-6">
-                        <Image src={finalImage} alt="Generated final image" layout="fill" objectFit="contain" />
-                      </div>
-                      <Button onClick={handleReset} className="w-full">
-                        <Trash2 />
-                        <span>Start Over</span>
-                      </Button>
-                  </CardContent>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    {photoDataUri && <Image src={photoDataUri} alt="Generated inspiration" width={500} height={500} className="w-full aspect-square rounded-lg object-contain" />}
+                    <div className="space-y-4">
+                      <Skeleton className="h-8 w-3/4" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-5/6" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  </div>
+                </CardContent>
               </Card>
             </div>
           );
+
+      case 'poem_ready':
+        if (photoDataUri && poem) {
+          return (
+            <PoemDisplay
+              photoDataUri={photoDataUri}
+              poem={poem}
+              onRevise={handleRevisePoem}
+              onReset={handleReset}
+            />
+          );
         }
-        handleReset(); // Fallback if image is missing
+        handleReset(); // Fallback if data is missing
         return null;
 
       default:
@@ -223,3 +242,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

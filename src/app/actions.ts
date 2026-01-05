@@ -46,7 +46,8 @@ export async function generatePoemAction(input: GeneratePoemInput): Promise<Gene
     return { poem: result.poem };
   } catch (e) {
     console.error(e);
-    return { error: 'An unexpected error occurred while generating the poem. Please try again.' };
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+    return { error: `An unexpected error occurred while generating the poem: ${errorMessage}` };
   }
 }
 
@@ -63,7 +64,8 @@ export async function customizePoemAction(input: CustomizePoemToneInput): Promis
         return { revisedPoem: result.revisedPoem };
     } catch (e) {
         console.error(e);
-        return { error: 'An unexpected error occurred while revising the poem. Please try again.' };
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+        return { error: `An unexpected error occurred while revising the poem: ${errorMessage}` };
     }
 }
 
@@ -77,7 +79,8 @@ export async function textToSpeechAction(input: TextToSpeechInput): Promise<Text
         return { audioDataUri: result.audioDataUri };
     } catch (e) {
         console.error(e);
-        return { error: 'An unexpected error occurred while generating audio. Please try again.' };
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+        return { error: `An unexpected error occurred while generating audio: ${errorMessage}` };
     }
 }
 
@@ -91,7 +94,8 @@ export async function generateImageAction(input: GenerateImageInput): Promise<Ge
         return { imageDataUri: result.imageDataUri };
     } catch (e) {
         console.error(e);
-        return { error: 'An unexpected error occurred while generating the image. Please try again.' };
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+        return { error: `An unexpected error occurred while generating the image: ${errorMessage}` };
     }
 }
 
@@ -105,6 +109,9 @@ export async function testVoiceAction(input: TestVoiceInput): Promise<TestVoiceR
         return result;
     } catch (e) {
         console.error(e);
-        return { error: 'An unexpected error occurred while testing the voice.' };
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+        return { error: `An unexpected error occurred while testing the voice: ${errorMessage}` };
     }
 }
+
+    

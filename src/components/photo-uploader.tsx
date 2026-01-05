@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, type DragEvent, type ChangeEvent } from 'react';
+import { useState, useRef, type DragEvent, type ChangeEvent, useEffect } from 'react';
 import Image from 'next/image';
 import { UploadCloud, Sparkles, X } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,18 +15,25 @@ import { Separator } from './ui/separator';
 interface PhotoUploaderProps {
   onImagesSelected: (dataUris: string[]) => void;
   onSingleImageUpload: (dataUri: string, tone: string, style: string) => void;
+  onSettingsChange: (tone: string, style: string) => void;
+  initialTone: string;
+  initialStyle: string;
 }
 
 const MAX_FILES = 3;
 const MAX_FILE_SIZE_MB = 4;
 
-export default function PhotoUploader({ onImagesSelected, onSingleImageUpload }: PhotoUploaderProps) {
+export default function PhotoUploader({ onImagesSelected, onSingleImageUpload, onSettingsChange, initialTone, initialStyle }: PhotoUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const [tone, setTone] = useState('Reflective');
-  const [style, setStyle] = useState('Free Verse');
+  const [tone, setTone] = useState(initialTone);
+  const [style, setStyle] = useState(initialStyle);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    onSettingsChange(tone, style);
+  }, [tone, style, onSettingsChange]);
 
   const handleFiles = (files: FileList) => {
     if (selectedFiles.length + files.length > MAX_FILES) {
@@ -99,26 +106,28 @@ export default function PhotoUploader({ onImagesSelected, onSingleImageUpload }:
   };
   
   const handleLegacyPoem = () => {
-    if (fileInputRef.current) {
-        fileInputRef.current.accept = 'image/*';
-        fileInputRef.current.multiple = false;
-        fileInputRef.current.onchange = (e: ChangeEvent<HTMLInputElement>) => {
-            if (e.target.files && e.target.files[0]) {
-                const file = e.target.files[0];
-                 if (file.size > 10 * 1024 * 1024) { // 10MB limit for legacy
-                    toast({ variant: 'destructive', title: 'File too large', description: 'Please select an image smaller than 10MB.' });
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    onSingleImageUpload(ev.target?.result as string, tone, style);
-                };
-                reader.readAsDataURL(file);
-            }
+    // Create a temporary input for the single file upload
+    const legacyInput = document.createElement('input');
+    legacyInput.type = 'file';
+    legacyInput.accept = 'image/*';
+    legacyInput.onchange = (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files && target.files[0]) {
+        const file = target.files[0];
+        if (file.size > 10 * 1024 * 1024) { // 10MB limit for legacy
+          toast({ variant: 'destructive', title: 'File too large', description: 'Please select an image smaller than 10MB.' });
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          onSingleImageUpload(ev.target?.result as string, tone, style);
         };
-        fileInputRef.current.click();
-    }
+        reader.readAsDataURL(file);
+      }
+    };
+    legacyInput.click();
   };
+
 
   const tones = ['Reflective', 'Joyful', 'Melancholic', 'Romantic', 'Humorous', 'Dramatic'];
   const styles = ['Free Verse', 'Haiku', 'Sonnet', 'Limerick', 'Ode'];
@@ -131,10 +140,40 @@ export default function PhotoUploader({ onImagesSelected, onSingleImageUpload }:
       </CardHeader>
       <CardContent className="space-y-6">
         
+        {/* Poem Settings - Placed above both options */}
+        <div className="space-y-4 rounded-lg border bg-background/50 p-4">
+             <Label className="text-base font-medium text-center block">Poem Settings</Label>
+             <p className="text-sm text-muted-foreground text-center">Choose a tone and style for your poem.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                  <Label htmlFor="tone">Poem Tone</Label>
+                  <Select name="tone" value={tone} onValueChange={setTone}>
+                      <SelectTrigger id="tone">
+                      <SelectValue placeholder="Select a tone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                      {tones.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                  </Select>
+                  </div>
+                  <div className="space-y-2">
+                  <Label htmlFor="style">Poem Style</Label>
+                  <Select name="style" value={style} onValueChange={setStyle}>
+                      <SelectTrigger id="style">
+                      <SelectValue placeholder="Select a style" />
+                      </SelectTrigger>
+                      <SelectContent>
+                      {styles.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                  </Select>
+                  </div>
+              </div>
+        </div>
+
         {/* New Multi-Image Uploader */}
         <div>
-          <Label className="text-base font-medium">Image Synthesis (2-3 photos)</Label>
-          <p className="text-sm text-muted-foreground mb-4">Combine multiple images to create something new.</p>
+          <Label className="text-base font-medium">1. Image Synthesis (2-3 photos)</Label>
+          <p className="text-sm text-muted-foreground mb-4">Combine multiple images to create a new one, then generate a poem from it.</p>
           <div
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
@@ -187,40 +226,16 @@ export default function PhotoUploader({ onImagesSelected, onSingleImageUpload }:
 
         {/* Legacy Poem Generator */}
         <div>
-           <Label className="text-base font-medium">Generate a Poem (1 photo)</Label>
+           <Label className="text-base font-medium">2. Direct Poem Generation (1 photo)</Label>
            <p className="text-sm text-muted-foreground mb-4">Turn a single photo into a beautiful poem.</p>
-           <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                    <Label htmlFor="tone">Poem Tone</Label>
-                    <Select name="tone" value={tone} onValueChange={setTone}>
-                        <SelectTrigger id="tone">
-                        <SelectValue placeholder="Select a tone" />
-                        </SelectTrigger>
-                        <SelectContent>
-                        {tones.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                    </div>
-                    <div className="space-y-2">
-                    <Label htmlFor="style">Poem Style</Label>
-                    <Select name="style" value={style} onValueChange={setStyle}>
-                        <SelectTrigger id="style">
-                        <SelectValue placeholder="Select a style" />
-                        </SelectTrigger>
-                        <SelectContent>
-                        {styles.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                    </div>
-                </div>
-                <Button onClick={handleLegacyPoem} className="w-full" variant="secondary">
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Select Photo & Generate Poem
-                </Button>
-           </div>
+           <Button onClick={handleLegacyPoem} className="w-full" variant="secondary">
+                <Sparkles className="mr-2 h-4 w-4" />
+                Select Photo & Generate Poem
+            </Button>
         </div>
       </CardContent>
     </Card>
   );
 }
+
+    
