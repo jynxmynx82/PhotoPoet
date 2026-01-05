@@ -227,10 +227,10 @@ export default function PhotoUploader({ onImagesSelected, onSingleImageUpload, o
 
 
         {/* Direct Poem Generation Section */}
-        <div className="rounded-lg border p-4 text-center bg-secondary">
-           <h3 className="text-2xl font-semibold leading-none tracking-tight font-headline">Direct Poem Generation</h3>
-           <p className="text-sm text-muted-foreground mb-4 mt-1.5">Turn a single photo into a beautiful poem.</p>
-           <Button onClick={handleLegacyPoem} className="w-full" variant="secondary">
+        <div className="rounded-lg border border-gray-300 p-4 text-center bg-secondary">
+           <CardTitle className="font-headline">Direct Poem Generation</CardTitle>
+           <CardDescription className="mb-4 mt-1.5">Turn a single photo into a beautiful poem.</CardDescription>
+           <Button onClick={handleLegacyPoem} className="w-full rounded-md border border-gray-400" variant="secondary">
                 <Sparkles className="mr-2 h-4 w-4" />
                 Select Photo & Generate Poem
             </Button>
