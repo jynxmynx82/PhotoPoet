@@ -56,10 +56,11 @@ export default function Home() {
 
       const poemResult = await generatePoemAction({ photoDataUri: imageDataUri, tone, style });
       
-      if (poemResult.error) {
-        setError(poemResult.error);
+      if (!poemResult || poemResult.error) {
+        const errorMessage = poemResult?.error || 'An unknown error occurred while generating the poem.';
+        setError(errorMessage);
         setAppState('error');
-        toast({ variant: 'destructive', title: 'Error Generating Poem', description: poemResult.error });
+        toast({ variant: 'destructive', title: 'Error Generating Poem', description: errorMessage });
       } else if (poemResult.poem) {
         setPoem(poemResult.poem);
         setOriginalPoem(poemResult.poem);
