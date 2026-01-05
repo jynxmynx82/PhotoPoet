@@ -32,6 +32,40 @@ interface TestVoiceResult {
     error?: string;
 }
 
+// Helper function to create more user-friendly error messages
+const getFriendlyErrorMessage = (error: any, context: 'poem' | 'image' | 'audio' | 'revision' | 'voice_test'): string => {
+    console.error(`Error in ${context} generation:`, error);
+    const rawMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+
+    if (rawMessage.includes('Deadline exceeded') || rawMessage.includes('504')) {
+        return 'The AI is taking a bit too long to respond. Please try again in a moment.';
+    }
+    if (rawMessage.includes('safety policy')) {
+        return 'The request was blocked by the content safety filter. Please adjust your prompt or image and try again.';
+    }
+     if (rawMessage.includes('API key not valid')) {
+        return 'The server is not configured correctly. Please contact support.';
+    }
+    if (rawMessage.match(/server error|500|503/i)) {
+        return 'The AI service is currently unavailable. Please try again later.';
+    }
+
+    // Default friendly message
+    switch(context) {
+        case 'image':
+            return 'An unexpected error occurred while creating your image. Please try again.';
+        case 'poem':
+            return 'An unexpected error occurred while generating your poem. Please try again.';
+        case 'audio':
+            return 'An unexpected error occurred while generating the audio. Please try again.';
+        case 'revision':
+            return 'An unexpected error occurred while revising the poem. Please try again.';
+        default:
+            return 'An unexpected error occurred. Please try again.';
+    }
+};
+
+
 export async function generatePoemAction(input: GeneratePoemInput): Promise<GenerateResult> {
   if (!input.photoDataUri) {
     return { error: 'Photo data is missing.' };
@@ -45,9 +79,7 @@ export async function generatePoemAction(input: GeneratePoemInput): Promise<Gene
     });
     return { poem: result.poem };
   } catch (e) {
-    console.error(e);
-    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
-    return { error: `An unexpected error occurred while generating the poem: ${errorMessage}` };
+    return { error: getFriendlyErrorMessage(e, 'poem') };
   }
 }
 
@@ -63,9 +95,7 @@ export async function customizePoemAction(input: CustomizePoemToneInput): Promis
         });
         return { revisedPoem: result.revisedPoem };
     } catch (e) {
-        console.error(e);
-        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
-        return { error: `An unexpected error occurred while revising the poem: ${errorMessage}` };
+        return { error: getFriendlyErrorMessage(e, 'revision') };
     }
 }
 
@@ -78,9 +108,7 @@ export async function textToSpeechAction(input: TextToSpeechInput): Promise<Text
         const result = await textToSpeech(input);
         return { audioDataUri: result.audioDataUri };
     } catch (e) {
-        console.error(e);
-        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
-        return { error: `An unexpected error occurred while generating audio: ${errorMessage}` };
+        return { error: getFriendlyErrorMessage(e, 'audio') };
     }
 }
 
@@ -93,9 +121,7 @@ export async function generateImageAction(input: GenerateImageInput): Promise<Ge
         const result = await generateImage(input);
         return { imageDataUri: result.imageDataUri };
     } catch (e) {
-        console.error(e);
-        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
-        return { error: `An unexpected error occurred while generating the image: ${errorMessage}` };
+        return { error: getFriendlyErrorMessage(e, 'image') };
     }
 }
 
@@ -108,9 +134,7 @@ export async function testVoiceAction(input: TestVoiceInput): Promise<TestVoiceR
         const result = await testVoice(input);
         return result;
     } catch (e) {
-        console.error(e);
-        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
-        return { error: `An unexpected error occurred while testing the voice: ${errorMessage}` };
+        return { error: getFriendlyErrorMessage(e, 'voice_test') };
     }
 }
 
