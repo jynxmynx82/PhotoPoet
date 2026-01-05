@@ -79,10 +79,11 @@ export default function Home() {
       aspectRatio: '1:1',
     });
 
-    if (imageResult.error || !imageResult.imageDataUri) {
-      setError(imageResult.error || 'Failed to generate image.');
+    if (!imageResult || imageResult.error || !imageResult.imageDataUri) {
+      const errorMessage = imageResult?.error || 'Failed to generate image.';
+      setError(errorMessage);
       setAppState('error');
-      toast({ variant: 'destructive', title: 'Error Generating Image', description: imageResult.error });
+      toast({ variant: 'destructive', title: 'Error Generating Image', description: errorMessage });
       setAppState('images_selected');
       return;
     }
