@@ -222,7 +222,7 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center min-h-screen p-4 sm:p-8 bg-background text-foreground">
       <Header />
-      <main className="flex-grow flex items-center justify-center w-full mt-8">
+      <main className="flex-grow flex items-center justify-center w-full mt-3">
         {renderContent()}
       </main>
       <footer className="w-full text-center p-4 mt-8">
