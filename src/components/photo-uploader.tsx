@@ -140,7 +140,7 @@ export default function PhotoUploader({ onImagesSelected, onSingleImageUpload, o
       </CardHeader>
       <CardContent className="space-y-6">
         
-        {/* Poem Settings - Placed above both options */}
+        {/* Poem Settings */}
         <div className="space-y-4 rounded-lg border bg-background/50 p-4">
              <Label className="text-base font-medium text-center block">Poem Settings</Label>
              <p className="text-sm text-muted-foreground text-center">Choose a tone and style for your poem.</p>
@@ -170,10 +170,10 @@ export default function PhotoUploader({ onImagesSelected, onSingleImageUpload, o
               </div>
         </div>
 
-        {/* New Multi-Image Uploader */}
-        <div>
-          <Label className="text-base font-medium">1. Image Synthesis (2-3 photos)</Label>
-          <p className="text-sm text-muted-foreground mb-4">Combine multiple images to create a new one, then generate a poem from it.</p>
+        {/* Image Synthesis Section */}
+        <div className="rounded-lg border p-4">
+          <Label className="text-base font-medium">Image Synthesis</Label>
+          <p className="text-sm text-muted-foreground mb-4">Combine 2-3 images to create a new one, then generate a poem from it.</p>
           <div
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
@@ -224,9 +224,9 @@ export default function PhotoUploader({ onImagesSelected, onSingleImageUpload, o
             <Separator className="flex-grow" />
         </div>
 
-        {/* Legacy Poem Generator */}
-        <div>
-           <Label className="text-base font-medium">2. Direct Poem Generation (1 photo)</Label>
+        {/* Direct Poem Generation Section */}
+        <div className="rounded-lg border p-4 bg-secondary/30">
+           <Label className="text-base font-medium">Direct Poem Generation</Label>
            <p className="text-sm text-muted-foreground mb-4">Turn a single photo into a beautiful poem.</p>
            <Button onClick={handleLegacyPoem} className="w-full" variant="secondary">
                 <Sparkles className="mr-2 h-4 w-4" />
@@ -237,5 +237,3 @@ export default function PhotoUploader({ onImagesSelected, onSingleImageUpload, o
     </Card>
   );
 }
-
-    
