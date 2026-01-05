@@ -60,11 +60,8 @@ Image: {{media url=photoDataUri}}
     const styleInstructions = styleResult.output?.styleInstructions || "Generate a beautiful, artistic, and painterly image that visually represents the mood and subjects in this poem. Preserve the apparent ethnicity, gender, and other key physical attributes of any people depicted in the original image.";
 
     const {media} = await ai.generate({
-      model: 'googleai/gemini-2.5-flash-image',
+      model: 'googleai/imagen-4.0-fast-generate-001',
       prompt: `${styleInstructions}. Poem for inspiration: ${poem}. The image should have an aspect ratio of ${aspectRatio}.`,
-      config: {
-        responseModalities: ['TEXT', 'IMAGE'],
-      },
     });
     
     if (!media || !media.url) {
