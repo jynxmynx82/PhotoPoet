@@ -43,7 +43,7 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async ({poem, prompt, photoDataUri, photoDataUris, aspectRatio}) => {
-    const model = 'googleai/gemini-pro-vision';
+    const model = 'googleai/gemini-2.5-flash-image-preview';
     const promptParts: (string | MediaPart)[] = [];
 
     // Image Synthesis Flow
