@@ -11,6 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 
 const GeneratePoemInputSchema = z.object({
   photoDataUri: z
@@ -34,15 +35,18 @@ export async function generatePoem(input: GeneratePoemInput): Promise<GeneratePo
 
 const prompt = ai.definePrompt({
   name: 'generatePoemPrompt',
+  model: googleAI.model('gemini-1.5-flash-latest'),
   input: {schema: GeneratePoemInputSchema},
   output: {schema: GeneratePoemOutputSchema},
-  prompt: `You are a poet specializing in writing poems inspired by photos.
+  prompt: `You are an expert poet who specializes in creating lyrical and evocative poems inspired by images. Your task is to analyze the provided photo and compose a poem that captures its essence.
 
-  Write a poem inspired by the following photo.
-  The poem should have a consistent tone and style, if specified. 
+  Instructions:
+  1.  Carefully observe the main subjects, setting, mood, and any details in the photo.
+  2.  Write a poem that reflects what you see.
+  3.  Adhere to the specified tone and style.
 
-  Tone: {{tone}}
-  Style: {{style}}
+  Tone: {{{tone}}}
+  Style: {{{style}}}
   Photo: {{media url=photoDataUri}}
   `,
 });
