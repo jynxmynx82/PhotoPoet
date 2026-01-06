@@ -54,7 +54,7 @@ const generatePoemFlow = ai.defineFlow(
     outputSchema: GeneratePoemOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input, { model: 'googleai/gemini-pro-vision'});
+    const {output} = await prompt(input);
     if (!output) {
       throw new Error('The AI model failed to produce a valid output. This may be due to a safety policy violation or a temporary issue.');
     }
