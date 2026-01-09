@@ -11,7 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { MediaPart } from 'genkit/cohere';
+import { MediaPart, Part } from 'genkit';
 
 const GenerateImageInputSchema = z.object({
   poem: z.string().optional().describe('The poem to use as inspiration for the image.'),
@@ -43,8 +43,8 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async ({poem, prompt, photoDataUri, photoDataUris, aspectRatio}) => {
-    const model = 'googleai/gemini-2.5-flash-image-preview';
-    const promptParts: (string | MediaPart)[] = [];
+    const model = 'googleai/gemini-2.5-flash-image';
+    const promptParts: Part[] = [];
 
     // Image Synthesis Flow
     if (prompt && photoDataUris) {

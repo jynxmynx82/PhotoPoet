@@ -35,7 +35,7 @@ export async function generatePoem(input: GeneratePoemInput): Promise<GeneratePo
 
 const prompt = ai.definePrompt({
   name: 'generatePoemPrompt',
-  model: googleAI.model('gemini-1.5-flash-latest'),
+  model: googleAI.model('gemini-2.5-flash'),
   input: {schema: GeneratePoemInputSchema},
   output: {schema: GeneratePoemOutputSchema},
   prompt: `You are an expert poet who specializes in creating lyrical and evocative poems inspired by images. Your task is to analyze the provided photo and compose a poem that captures its essence.
